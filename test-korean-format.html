@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>한국어 포맷 HUD 테스트</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: radial-gradient(circle at 30% 30%, #0f1c12, #050805 60%);
+            color: #d3ffd3;
+            font-family: "Courier New", monospace;
+            padding: 20px;
+        }
+        h1 {
+            letter-spacing: 0.08em;
+            font-size: 20px;
+        }
+        .test-section {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            border: 1px solid rgba(126, 255, 192, 0.2);
+            margin: 15px 0;
+            max-width: 800px;
+        }
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: "Courier New", monospace;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #00cc33;
+        }
+        #output {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>한국어 포맷 HUD 테스트 - 등급 자동 계산</h1>
+    
+    <div class="test-section">
+        <h2>테스트 시나리오</h2>
+        <button onclick="testScenario1()">시나리오 1: 초기 상태</button>
+        <button onclick="testScenario2()">시나리오 2: 중간 상태</button>
+        <button onclick="testScenario3()">시나리오 3: 위급 상태</button>
+        <button onclick="testScenario4()">시나리오 4: 최고 상태</button>
+        <button onclick="testScenario5()">시나리오 5: 등급 변화 테스트</button>
+    </div>
+
+    <div class="test-section">
+        <h2>출력 영역</h2>
+        <div id="output"></div>
+    </div>
+
+    <script>
+        function addOutput(text) {
+            const output = document.getElementById('output');
+            output.innerHTML = text;
+            console.log('추가된 텍스트:', text);
+        }
+
+        function testScenario1() {
+            addOutput(`[T1]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 5000 B ]
+[ 스탯 | 신체:85 | 언변:70 | 행운:90 ]
+[ 어빌리티 | 전자 조작 | 8.5 Sv ]
+-
+[ 2057년 10월 28일 | 14시 30분 ]
+[ 위치 | 학원도시 제7학구 | ⚪ ]
+-
+▣ 캐릭터없음
+-
+▣ 임무없음`);
+        }
+
+        function testScenario2() {
+            addOutput(`[T5]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 7500 B ]
+[ 스탯 | 신체:65 | 언변:70 | 행운:90 ]
+[ 어빌리티 | 전자 조작 | 7.2 Sv ]
+-
+[ 2057년 10월 28일 | 19시 45분 ]
+[ 위치 | 폐허 지구 전투 지역 | 🔴 ]
+-
+▣ 시라이 쿠로코
+▣ 우이하루 카자리
+▣ 사텐 루이코
+-
+▣ 임무: 변이체 소탕`);
+        }
+
+        function testScenario3() {
+            addOutput(`[T8]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 7500 B ]
+[ 스탯 | 신체:35 | 언변:45 | 행운:30 ]
+[ 어빌리티 | 전자 조작 | 3.5 Sv ]
+-
+[ 2057년 10월 28일 | 23시 15분 ]
+[ 위치 | 위험 구역 | 🔴 ]
+-
+▣ 시라이 쿠로코
+▣ 우이하루 카자리
+-
+▣ 임무: 긴급 탈출 50%`);
+        }
+
+        function testScenario4() {
+            addOutput(`[T10]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 25000 B ]
+[ 스탯 | 신체:95 | 언변:92 | 행운:98 ]
+[ 어빌리티 | 전자 조작 | 9.8 Sv ]
+-
+[ 2057년 10월 29일 | 02시 30분 ]
+[ 위치 | 기지 메디컬 베이 | ⚪ ]
+-
+▣ 시라이 쿠로코
+▣ 우이하루 카자리
+▣ 사텐 루이코
+-
+▣ 임무: 완료 - 보고 대기`);
+        }
+
+        function testScenario5() {
+            let turn = 11;
+            const scenarios = [
+                { body: 95, speech: 88, luck: 92, desc: 'S/A/S 등급 - 비범/출중/비범' },
+                { body: 75, speech: 68, luck: 82, desc: 'B/B/A 등급 - 평범/평범/출중' },
+                { body: 55, speech: 48, luck: 42, desc: 'C/C/C 등급 - 부족/부족/부족' },
+                { body: 35, speech: 28, luck: 32, desc: 'D/D/D 등급 - 최악/최악/최악' }
+            ];
+            
+            let currentIndex = 0;
+            
+            function showNextScenario() {
+                if (currentIndex < scenarios.length) {
+                    const s = scenarios[currentIndex];
+                    addOutput(`[T${turn + currentIndex}]
+-
+[ 테스트 캐릭터 | 테스터 | 등급 테스트 | 10000 B ]
+[ 스탯 | 신체:${s.body} | 언변:${s.speech} | 행운:${s.luck} ]
+-
+[ 2057년 10월 29일 | 10시 00분 ]
+[ 위치 | 테스트 구역 | ⚪ ]
+-
+▣ 테스트 동료
+-
+▣ 임무: 등급 테스트 진행중
+
+=== ${s.desc} ===`);
+                    currentIndex++;
+                    if (currentIndex < scenarios.length) {
+                        setTimeout(showNextScenario, 3000);
+                    }
+                }
+            }
+            
+            showNextScenario();
+        }
+
+        // 페이지 로드 시 첫 번째 시나리오 표시
+        window.addEventListener('load', () => {
+            setTimeout(testScenario1, 500);
+        });
+    </script>
+
+    <!-- apocalypse-hud.user.js 스크립트 로드 -->
+    <script src="./apocalypse-hud.user.js"></script>
+</body>
+</html>

@@ -12,6 +12,9 @@
 (function() {
     'use strict';
 
+    // ==================== 상수 정의 ====================
+    const MAX_ABILITY_SV = 10.0;
+
     // ==================== 데이터 구조 ====================
     const hudData = {
         profile: {
@@ -39,6 +42,10 @@
             title: '임무 대기중',
             progress: 0
         },
+        ability: {
+            name: '없음',
+            sv: 0.0
+        },
         currentTurn: 0,
         lastTurnData: '',
         snsData: {
@@ -61,17 +68,94 @@
                     position: fixed;
                     top: 20px;
                     right: 20px;
-                    width: 380px;
+                    width: 280px;
+                    max-width: 90vw;
                     font-family: 'Courier New', monospace;
                     color: #00ff41;
                     background: rgba(0, 0, 0, 0.85);
                     border: 2px solid #00ff41;
                     box-shadow: 0 0 20px rgba(0, 255, 65, 0.5), inset 0 0 20px rgba(0, 255, 65, 0.1);
-                    padding: 15px;
+                    padding: 10px;
+                    padding-top: 35px;
                     z-index: 999999;
-                    pointer-events: none;
+                    pointer-events: auto;
                     user-select: none;
                     animation: hudFlicker 0.1s infinite;
+                }
+
+                #apocalypse-hud.hidden {
+                    display: none;
+                }
+
+                .hud-drag-handle {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 30px;
+                    background: rgba(0, 255, 65, 0.1);
+                    border-bottom: 1px solid #00ff41;
+                    cursor: move;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 8px;
+                    pointer-events: auto;
+                }
+
+                .hud-drag-handle:hover {
+                    background: rgba(0, 255, 65, 0.2);
+                }
+
+                .hud-drag-title {
+                    font-size: 9px;
+                    color: #00ff41;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    pointer-events: none;
+                }
+
+                .hud-toggle-btn {
+                    background: transparent;
+                    border: 1px solid #00ff41;
+                    color: #00ff41;
+                    padding: 3px 6px;
+                    cursor: pointer;
+                    font-size: 9px;
+                    font-family: 'Courier New', monospace;
+                    pointer-events: auto;
+                    transition: all 0.2s;
+                }
+
+                .hud-toggle-btn:hover {
+                    background: #00ff41;
+                    color: #000;
+                    box-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+                }
+
+                .hud-show-btn {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(0, 0, 0, 0.85);
+                    border: 2px solid #00ff41;
+                    color: #00ff41;
+                    padding: 8px 12px;
+                    cursor: pointer;
+                    font-size: 11px;
+                    font-family: 'Courier New', monospace;
+                    z-index: 999999;
+                    box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+                    pointer-events: auto;
+                }
+
+                .hud-show-btn:hover {
+                    background: #00ff41;
+                    color: #000;
+                }
+
+                .hud-show-btn.hidden {
+                    display: none;
                 }
 
                 @keyframes hudFlicker {
@@ -120,9 +204,9 @@
                 }
 
                 .hud-section {
-                    margin-bottom: 12px;
+                    margin-bottom: 8px;
                     border-bottom: 1px solid rgba(0, 255, 65, 0.3);
-                    padding-bottom: 8px;
+                    padding-bottom: 6px;
                 }
 
                 .hud-section:last-child {
@@ -131,21 +215,21 @@
                 }
 
                 .hud-title {
-                    font-size: 11px;
+                    font-size: 9px;
                     color: #00ff41;
                     text-transform: uppercase;
-                    margin-bottom: 6px;
+                    margin-bottom: 4px;
                     text-shadow: 0 0 5px rgba(0, 255, 65, 0.8);
-                    letter-spacing: 2px;
+                    letter-spacing: 1px;
                 }
 
                 .hud-header {
-                    font-size: 10px;
+                    font-size: 9px;
                     color: #00cc33;
-                    margin-bottom: 10px;
+                    margin-bottom: 8px;
                     text-align: center;
                     border-bottom: 1px solid #00ff41;
-                    padding-bottom: 5px;
+                    padding-bottom: 4px;
                     animation: glitch 3s infinite;
                 }
 
@@ -158,8 +242,8 @@
 
                 /* 프로필 모듈 */
                 .profile-item {
-                    font-size: 11px;
-                    margin-bottom: 4px;
+                    font-size: 9px;
+                    margin-bottom: 3px;
                     display: flex;
                     justify-content: space-between;
                 }
@@ -175,13 +259,13 @@
 
                 /* 스탯 모듈 */
                 .stat-item {
-                    margin-bottom: 6px;
+                    margin-bottom: 5px;
                 }
 
                 .stat-header {
                     display: flex;
                     justify-content: space-between;
-                    font-size: 10px;
+                    font-size: 8px;
                     margin-bottom: 2px;
                 }
 
@@ -194,7 +278,7 @@
                 }
 
                 .stat-bar-container {
-                    height: 8px;
+                    height: 6px;
                     background: rgba(0, 50, 20, 0.5);
                     border: 1px solid #00ff41;
                     position: relative;
@@ -217,8 +301,8 @@
 
                 /* 환경 센서 모듈 */
                 .env-item {
-                    font-size: 10px;
-                    margin-bottom: 3px;
+                    font-size: 8px;
+                    margin-bottom: 2px;
                     display: flex;
                     justify-content: space-between;
                 }
@@ -233,10 +317,10 @@
 
                 .danger-indicator {
                     display: inline-block;
-                    width: 6px;
-                    height: 6px;
+                    width: 5px;
+                    height: 5px;
                     border-radius: 50%;
-                    margin-left: 5px;
+                    margin-left: 4px;
                     animation: pulse 1s infinite;
                 }
 
@@ -254,12 +338,12 @@
                 .squad-grid {
                     display: grid;
                     grid-template-columns: 1fr 1fr;
-                    gap: 6px;
+                    gap: 4px;
                 }
 
                 .squad-member {
-                    font-size: 9px;
-                    padding: 4px;
+                    font-size: 8px;
+                    padding: 3px;
                     border: 1px solid #00ff41;
                     background: rgba(0, 50, 20, 0.3);
                     position: relative;
@@ -284,18 +368,18 @@
 
                 .squad-status {
                     color: #00cc33;
-                    font-size: 8px;
+                    font-size: 7px;
                 }
 
                 /* 미션 모듈 */
                 .mission-title {
-                    font-size: 10px;
+                    font-size: 8px;
                     color: #00ff41;
-                    margin-bottom: 4px;
+                    margin-bottom: 3px;
                 }
 
                 .mission-bar-container {
-                    height: 12px;
+                    height: 10px;
                     background: rgba(0, 50, 20, 0.5);
                     border: 1px solid #00ff41;
                     position: relative;
@@ -314,42 +398,41 @@
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    font-size: 9px;
+                    font-size: 8px;
                     color: #000;
                     font-weight: bold;
                     text-shadow: 0 0 3px rgba(0, 255, 65, 0.8);
                     z-index: 1;
                 }
 
-                /* 콘솔 모듈 */
-                .console-input {
-                    width: 100%;
-                    background: rgba(0, 50, 20, 0.5);
-                    border: 1px solid #00ff41;
-                    color: #00ff41;
-                    font-family: 'Courier New', monospace;
-                    font-size: 11px;
-                    padding: 6px;
-                    margin-top: 5px;
-                    pointer-events: auto;
-                    box-sizing: border-box;
-                }
-
-                .console-input:focus {
-                    outline: none;
-                    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
-                    background: rgba(0, 50, 20, 0.7);
-                }
-
-                .console-input::placeholder {
-                    color: #006622;
-                }
-
-                .console-hint {
+                /* 어빌리티 모듈 */
+                .ability-display {
                     font-size: 8px;
+                    color: #00ff41;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
+                }
+
+                .ability-label {
                     color: #00cc33;
-                    margin-top: 3px;
-                    opacity: 0.7;
+                }
+
+                .ability-name {
+                    color: #00ffff;
+                    font-weight: bold;
+                    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+                }
+
+                .ability-sv {
+                    color: #00ff41;
+                    margin-left: auto;
+                }
+
+                #ability-sv-value {
+                    font-weight: bold;
+                    color: #ffff00;
+                    text-shadow: 0 0 5px rgba(255, 255, 0, 0.5);
                 }
 
                 /* 상태 화면 */
@@ -362,14 +445,14 @@
                 }
 
                 .status-content {
-                    font-size: 11px;
-                    line-height: 1.6;
+                    font-size: 9px;
+                    line-height: 1.5;
                 }
 
                 .status-item {
-                    margin-bottom: 8px;
+                    margin-bottom: 6px;
                     border-bottom: 1px solid rgba(0, 255, 65, 0.2);
-                    padding-bottom: 8px;
+                    padding-bottom: 6px;
                 }
 
                 .status-label {
@@ -379,13 +462,13 @@
 
                 .status-value {
                     color: #00ff41;
-                    margin-left: 10px;
+                    margin-left: 8px;
                 }
 
                 /* SNS 화면 */
                 .sns-screen {
                     display: none;
-                    max-height: 500px;
+                    max-height: 400px;
                     overflow-y: auto;
                 }
 
@@ -401,11 +484,11 @@
                 }
 
                 .sns-text {
-                    font-size: 10px;
-                    line-height: 1.6;
+                    font-size: 8px;
+                    line-height: 1.5;
                     color: #00ff41;
                     white-space: pre-wrap;
-                    margin: 10px 0;
+                    margin: 8px 0;
                 }
 
                 /* 뒤로가기 버튼 */
@@ -413,11 +496,11 @@
                     background: #00ff41;
                     color: #000;
                     border: none;
-                    padding: 8px 15px;
-                    margin: 10px 0;
+                    padding: 6px 12px;
+                    margin: 8px 0;
                     cursor: pointer;
                     font-weight: bold;
-                    font-size: 11px;
+                    font-size: 9px;
                     font-family: 'Courier New', monospace;
                     pointer-events: auto;
                     width: 100%;
@@ -438,6 +521,11 @@
                     display: none !important;
                 }
             </style>
+
+            <div class="hud-drag-handle" id="hud-drag-handle">
+                <span class="hud-drag-title">≡ DRAG TO MOVE</span>
+                <button class="hud-toggle-btn" id="hud-hide-btn">[ HIDE ]</button>
+            </div>
 
             <div class="hud-header">
                 ◢◤ APOCALYPSE TACTICAL TERMINAL ◥◣<br>
@@ -548,11 +636,14 @@
                 </div>
             </div>
 
-            <!-- 콘솔 입력 모듈 -->
-            <div class="hud-section" id="console-section">
-                <div class="hud-title">▶ TERMINAL</div>
-                <input type="text" id="console-input" class="console-input" placeholder="명령어 입력 (/status, /sns, /back)..." />
-                <div class="console-hint">Tip: /status = 상태창 | /sns = SNS | /back = 돌아가기</div>
+            <!-- 어빌리티 모듈 -->
+            <div class="hud-section">
+                <div class="hud-title">▶ ABILITY</div>
+                <div class="ability-display">
+                    <span class="ability-label">어빌리티 |</span>
+                    <span class="ability-name" id="ability-name">없음</span>
+                    <span class="ability-sv">| <span id="ability-sv-value">0.0</span> Sv</span>
+                </div>
             </div>
             </div>
             <!-- 메인 화면 끝 -->
@@ -627,19 +718,108 @@
 
         document.body.appendChild(hudContainer);
         
-        // 콘솔 입력 이벤트 리스너 추가
-        const consoleInput = document.getElementById('console-input');
-        consoleInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleConsoleCommand(consoleInput.value);
-                consoleInput.value = '';
-            }
-        });
+        // 토글 버튼 생성
+        const showButton = document.createElement('button');
+        showButton.id = 'hud-show-button';
+        showButton.className = 'hud-show-btn hidden';
+        showButton.textContent = '[ SHOW HUD ]';
+        document.body.appendChild(showButton);
+        
+        // 드래그 기능 추가
+        setupDraggable();
+        
+        // 토글 기능 추가
+        setupToggle();
         
         // 전역 객체에 함수 노출
         window.apocalypseHUD = {
             switchScreen: switchScreen
         };
+    }
+
+    // ==================== 드래그 기능 설정 ====================
+    function setupDraggable() {
+        const hud = document.getElementById('apocalypse-hud');
+        const dragHandle = document.getElementById('hud-drag-handle');
+        
+        if (!hud || !dragHandle) return;
+        
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        dragHandle.addEventListener('mousedown', dragStart);
+        dragHandle.addEventListener('touchstart', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('mouseup', dragEnd);
+        document.addEventListener('touchend', dragEnd);
+        
+        function dragStart(e) {
+            if (e.type === 'touchstart') {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+            
+            if (e.target === dragHandle || dragHandle.contains(e.target)) {
+                isDragging = true;
+            }
+        }
+        
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                
+                if (e.type === 'touchmove') {
+                    currentX = e.touches[0].clientX - initialX;
+                    currentY = e.touches[0].clientY - initialY;
+                } else {
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                }
+                
+                xOffset = currentX;
+                yOffset = currentY;
+                
+                setTranslate(currentX, currentY, hud);
+            }
+        }
+        
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
+        
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+        }
+    }
+    
+    // ==================== 토글 기능 설정 ====================
+    function setupToggle() {
+        const hud = document.getElementById('apocalypse-hud');
+        const hideBtn = document.getElementById('hud-hide-btn');
+        const showBtn = document.getElementById('hud-show-button');
+        
+        if (!hud || !hideBtn || !showBtn) return;
+        
+        hideBtn.addEventListener('click', () => {
+            hud.classList.add('hidden');
+            showBtn.classList.remove('hidden');
+        });
+        
+        showBtn.addEventListener('click', () => {
+            hud.classList.remove('hidden');
+            showBtn.classList.add('hidden');
+        });
     }
 
     // ==================== 화면 전환 함수 ====================
@@ -730,63 +910,20 @@
         }
     }
 
-    // ==================== 콘솔 명령어 처리 ====================
-    function handleConsoleCommand(command) {
-        command = command.trim().toLowerCase();
-        
-        if (command === '/status') {
-            switchScreen('status');
-        } else if (command === '/sns') {
-            // 실제 채팅 입력 필드 찾기 및 !sns 입력
-            sendChatMessage('!sns');
-            // SNS 화면으로 전환
-            switchScreen('sns');
-        } else if (command === '/back') {
-            switchScreen('main');
-        } else if (command === '/help') {
-            console.log('[Apocalypse HUD] 사용 가능한 명령어:');
-            console.log('/status - 상태 정보 보기');
-            console.log('/sns - SNS 피드 보기 (채팅에 !sns 입력)');
-            console.log('/back - 메인 화면으로 돌아가기');
+    // ==================== 등급 계산 함수 ====================
+    function calculateGrade(value, max = 100) {
+        // Validate inputs
+        if (max <= 0) {
+            console.warn('[Apocalypse HUD] Invalid max value for grade calculation:', max);
+            return 'D';
         }
         
-        // 명령어 히스토리에 추가
-        consoleHistory.push(command);
-    }
-
-    // ==================== 채팅 메시지 전송 ====================
-    function sendChatMessage(message) {
-        // 일반적인 채팅 입력 필드 선택자들
-        const possibleSelectors = [
-            'textarea[placeholder*="메시지"]',
-            'textarea[placeholder*="Message"]',
-            'textarea[id*="prompt"]',
-            'textarea[class*="input"]',
-            'input[type="text"][placeholder*="메시지"]',
-            'input[type="text"][placeholder*="Message"]',
-            '#prompt-textarea',
-            'textarea'
-        ];
-        
-        let chatInput = null;
-        for (const selector of possibleSelectors) {
-            chatInput = document.querySelector(selector);
-            if (chatInput) break;
-        }
-        
-        if (chatInput) {
-            // 입력 필드에 메시지 설정
-            chatInput.value = message;
-            chatInput.focus();
-            
-            // 이벤트 트리거 (React 등의 프레임워크 호환)
-            const inputEvent = new Event('input', { bubbles: true });
-            chatInput.dispatchEvent(inputEvent);
-            
-            console.log('[Apocalypse HUD] 채팅에 "' + message + '" 입력됨');
-        } else {
-            console.log('[Apocalypse HUD] 채팅 입력 필드를 찾을 수 없습니다.');
-        }
+        const percentage = (value / max) * 100;
+        if (percentage >= 90) return 'S';  // 비범 (Exceptional)
+        if (percentage >= 80) return 'A';  // 출중 (Excellent)
+        if (percentage >= 60) return 'B';  // 평범 (Average)
+        if (percentage >= 40) return 'C';  // 부족 (Insufficient)
+        return 'D';  // 최악 (Worst)
     }
 
     // ==================== HUD 업데이트 함수 ====================
@@ -862,6 +999,10 @@
         document.getElementById('mission-title').textContent = hudData.mission.title;
         document.getElementById('mission-bar').style.width = hudData.mission.progress + '%';
         document.getElementById('mission-progress').textContent = Math.round(hudData.mission.progress) + '%';
+        
+        // 어빌리티
+        document.getElementById('ability-name').textContent = hudData.ability.name;
+        document.getElementById('ability-sv-value').textContent = hudData.ability.sv.toFixed(1);
     }
 
     // ==================== 텍스트 파서 ====================
@@ -934,6 +1075,8 @@
                 const value = parseInt(bodyMatch[1]);
                 if (!isNaN(value)) {
                     hudData.stats.health.value = Math.min(value, hudData.stats.health.max);
+                    // 자동으로 등급 계산
+                    hudData.stats.health.grade = calculateGrade(hudData.stats.health.value, hudData.stats.health.max);
                     updated = true;
                 }
             }
@@ -944,6 +1087,8 @@
                 const value = parseInt(speechMatch[1]);
                 if (!isNaN(value)) {
                     hudData.stats.mental.value = Math.min(value, hudData.stats.mental.max);
+                    // 자동으로 등급 계산
+                    hudData.stats.mental.grade = calculateGrade(hudData.stats.mental.value, hudData.stats.mental.max);
                     updated = true;
                 }
             }
@@ -954,6 +1099,8 @@
                 const value = parseInt(luckMatch[1]);
                 if (!isNaN(value)) {
                     hudData.stats.combat.value = Math.min(value, hudData.stats.combat.max);
+                    // 자동으로 등급 계산
+                    hudData.stats.combat.grade = calculateGrade(hudData.stats.combat.value, hudData.stats.combat.max);
                     updated = true;
                 }
             }
@@ -1047,6 +1194,19 @@
             } else if (mission === '임무없음' || mission === '없음') {
                 hudData.mission.title = '임무 대기중';
                 hudData.mission.progress = 0;
+                updated = true;
+            }
+        }
+        
+        // 7. 어빌리티 파싱: [ 어빌리티 | 어빌리티명 | Sv값 Sv ]
+        const abilityMatch = text.match(/\[\s*어빌리티\s*\|\s*([^|]+?)\s*\|\s*([\d.]+)\s*Sv\s*\]/i);
+        if (abilityMatch) {
+            const abilityName = abilityMatch[1].trim();
+            const svValue = parseFloat(abilityMatch[2]);
+            
+            if (abilityName && !isNaN(svValue) && svValue >= 0 && svValue <= MAX_ABILITY_SV) {
+                hudData.ability.name = abilityName;
+                hudData.ability.sv = svValue;
                 updated = true;
             }
         }
