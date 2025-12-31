@@ -21,7 +21,6 @@
         },
         stats: {
             health: { value: 100, max: 100, grade: 'S' },
-            stamina: { value: 100, max: 100, grade: 'A' },
             mental: { value: 100, max: 100, grade: 'B' },
             combat: { value: 50, max: 100, grade: 'C' }
         },
@@ -478,15 +477,6 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-header">
-                        <span class="stat-name">신체 (BODY 2)</span>
-                        <span class="stat-value" id="stat-stamina-text">100/100 [A]</span>
-                    </div>
-                    <div class="stat-bar-container">
-                        <div class="stat-bar grade-A" id="stat-stamina-bar" style="width: 100%"></div>
-                    </div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-header">
                         <span class="stat-name">언변 (SPEECH)</span>
                         <span class="stat-value" id="stat-mental-text">100/100 [B]</span>
                     </div>
@@ -936,13 +926,12 @@
         if (statsMatch) {
             const statsContent = statsMatch[1];
             
-            // 신체 (health/stamina로 매핑)
+            // 신체 (health로 매핑)
             const bodyMatch = statsContent.match(/신체\s*[:：]\s*(\d+)/);
             if (bodyMatch) {
                 const value = parseInt(bodyMatch[1]);
                 if (!isNaN(value)) {
                     hudData.stats.health.value = Math.min(value, hudData.stats.health.max);
-                    hudData.stats.stamina.value = Math.min(value, hudData.stats.stamina.max);
                     updated = true;
                 }
             }

@@ -112,7 +112,7 @@
 
 ### 2. BIOMETRIC STATUS (스탯)
 - 3가지 주요 스탯: 신체 (BODY), 언변 (SPEECH), 행운 (LUCK)
-- 신체는 2개의 바로 표시 (BODY + STAMINA)
+- 신체는 1개의 바로 표시 (BODY)
 - 등급별 색상 코딩:
   - **S등급**: 핑크/마젠타 (최상급)
   - **A등급**: 시안/청록 (우수)
@@ -311,4 +311,3 @@ Open `demo.html` in a browser to see the HUD parse the sample `[T9]` payload and
    SQUAD: Raven=Alive, Ghost=Down, Hex=Missing, Viper=Dead
    MISSION: Breach S7 GATE // Progress=42%
    ```
-
