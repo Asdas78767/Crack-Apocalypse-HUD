@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apocalypse HUD - AI 시뮬레이션</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #00ff41;
+        }
+        h1 {
+            text-align: center;
+            color: #00ff41;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+        }
+        .control-panel {
+            background: #1a1a1a;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #00cc33;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.8);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .narrative-box {
+            background: #0f0f0f;
+            border: 2px solid #00ff41;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 400px;
+            max-height: 600px;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+        .narrative-text {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .t9-data {
+            color: #ff00ff;
+            text-shadow: 0 0 5px rgba(255, 0, 255, 0.5);
+            font-weight: bold;
+        }
+        .timestamp {
+            color: #666;
+            font-size: 0.85em;
+            margin-right: 10px;
+        }
+        .auto-play {
+            background: #ff00ff;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 0, 255, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(255, 0, 255, 1); }
+        }
+        .info {
+            background: #1a1a1a;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #00ff41;
+            color: #00cc33;
+        }
+    </style>
+</head>
+<body>
+    <h1>◢◤ AI 게임 마스터 시뮬레이션 ◥◣</h1>
+    
+    <div class="info">
+        ℹ️ 이 페이지는 AI 게임 마스터가 서사를 진행하는 것을 시뮬레이션합니다.<br>
+        버튼을 클릭하여 스토리를 진행하고, HUD가 실시간으로 업데이트되는 것을 확인하세요.
+    </div>
+
+    <div class="control-panel">
+        <h3>▶ 컨트롤 패널</h3>
+        <button onclick="startNewGame()">🎮 새 게임</button>
+        <button onclick="nextScene()" id="next-btn">▶ 다음 장면</button>
+        <button onclick="toggleAutoPlay()" id="auto-btn">⏯ 자동 재생</button>
+        <button onclick="clearNarrative()">🗑️ 클리어</button>
+    </div>
+
+    <div class="narrative-box" id="narrative-box">
+        <div class="narrative-text">
+            <span class="timestamp">[SYSTEM]</span>
+            게임을 시작하려면 "새 게임" 버튼을 클릭하세요...
+        </div>
+    </div>
+
+    <script>
+        let sceneIndex = 0;
+        let autoPlayInterval = null;
+        let gameStarted = false;
+
+        const storyScenes = [
+            {
+                text: "2089년, 핵전쟁 이후 15년...",
+                data: ""
+            },
+            {
+                text: "당신은 폐허가 된 도시의 생존자입니다. 오늘도 살아남기 위해 버려진 건물들을 뒤지며 물자를 찾아다닙니다.",
+                data: "[T9:profile:name=생존자 K-7|job=스카벤저|funds=2500]"
+            },
+            {
+                text: "아침 9시, 당신은 구역 A-12의 폐허 빌딩 앞에 섰습니다. 이곳은 아직 완전히 탐색되지 않은 지역입니다.",
+                data: "[T9:env:time=09:00|location=구역 A-12 폐빌딩|danger=40] [T9:stats:health=100|stamina=100|mental=85|combat=60]"
+            },
+            {
+                text: "새로운 미션이 할당되었습니다: '의료 물자 확보'. 근처 병원 폐허에서 의약품을 찾아야 합니다.",
+                data: "[T9:mission:title=의료 물자 확보|progress=0]"
+            },
+            {
+                text: "건물에 진입하자 먼지와 녹슨 철근 냄새가 코를 찔렀습니다. 3층까지 올라가야 합니다.",
+                data: "[T9:mission:progress=15] [T9:stats:stamina=90]"
+            },
+            {
+                text: "무전기에서 잡음이 들립니다. 동료들이 응답합니다. 스쿼드가 편성되었습니다.",
+                data: "[T9:squad:index=0|name=의무병 지수|health=100] [T9:squad:index=1|name=정찰병 민호|health=95] [T9:squad:index=2|name=공병 서연|health=100]"
+            },
+            {
+                text: "2층에 도착했습니다. 갑자기 멀리서 기계음이 들립니다... 감시 드론입니다!",
+                data: "[T9:env:danger=65] [T9:mission:progress=30]"
+            },
+            {
+                text: "드론을 피해 숨었습니다. 심장이 빠르게 뛰고 있습니다. 정신력이 소모되었습니다.",
+                data: "[T9:stats:mental=70|stamina=80]"
+            },
+            {
+                text: "드론이 지나갔습니다. 3층에 도착했습니다. 의약품 상자를 발견했습니다!",
+                data: "[T9:mission:progress=60] [T9:env:danger=30]"
+            },
+            {
+                text: "그때, 갑자기 바닥이 무너집니다! 당신과 팀원들이 아래층으로 떨어졌습니다!",
+                data: "[T9:stats:health=60|stamina=50] [T9:squad:id=1|health=55|status=injured] [T9:env:danger=80]"
+            },
+            {
+                text: "낙하 충격으로 부상을 입었습니다. 민호가 심하게 다쳤습니다. 즉시 치료가 필요합니다!",
+                data: "[T9:squad:id=1|health=35|status=critical]"
+            },
+            {
+                text: "의무병 지수가 응급처치를 시작합니다. 위험한 상황이지만 침착함을 유지해야 합니다.",
+                data: "[T9:stats:mental=55] [T9:mission:progress=70]"
+            },
+            {
+                text: "소리를 들은 변이체들이 몰려옵니다! 전투가 시작되었습니다!",
+                data: "[T9:env:danger=95] [T9:stats:combat=75|combat_grade=B]"
+            },
+            {
+                text: "격렬한 전투 끝에 변이체들을 물리쳤습니다. 하지만 큰 대가를 치렀습니다...",
+                data: "[T9:stats:health=40|health_grade=D|stamina=25|mental=45] [T9:squad:id=0|health=65] [T9:squad:id=2|health=75]"
+            },
+            {
+                text: "비상구를 통해 탈출합니다. 의약품을 확보했습니다. 미션이 거의 완료되었습니다.",
+                data: "[T9:mission:progress=90] [T9:env:danger=50|location=비상 계단]"
+            },
+            {
+                text: "건물 밖으로 나왔습니다. 안전 지대로 복귀 중입니다.",
+                data: "[T9:env:danger=20|location=귀환 경로] [T9:mission:progress=95]"
+            },
+            {
+                text: "기지에 도착했습니다. 의료진이 팀원들을 치료하고 있습니다. 민호의 상태가 안정되었습니다.",
+                data: "[T9:squad:id=1|health=70|status=alive] [T9:env:time=15:30|location=기지 메디컬 베이|danger=5]"
+            },
+            {
+                text: "미션 완료! 의약품 확보 성공. 보상금을 받았습니다. 당신의 전투 실력이 향상되었습니다.",
+                data: "[T9:mission:progress=100] [T9:profile:funds=15000] [T9:stats:combat=85|combat_grade=A]"
+            },
+            {
+                text: "오늘도 살아남았습니다. 내일은 더 나은 날이 되기를...",
+                data: "[T9:stats:health=75|stamina=60|mental=70]"
+            },
+            {
+                text: "[게임 종료] - 새 게임을 시작하려면 '새 게임' 버튼을 클릭하세요.",
+                data: ""
+            }
+        ];
+
+        function addNarrative(text, t9Data) {
+            const narrativeBox = document.getElementById('narrative-box');
+            const narrativeDiv = document.createElement('div');
+            narrativeDiv.className = 'narrative-text';
+            
+            const timestamp = new Date().toLocaleTimeString('ko-KR');
+            let content = `<span class="timestamp">[${timestamp}]</span> ${text}`;
+            
+            if (t9Data) {
+                content += ` <span class="t9-data">${t9Data}</span>`;
+            }
+            
+            narrativeDiv.innerHTML = content;
+            narrativeBox.appendChild(narrativeDiv);
+            narrativeBox.scrollTop = narrativeBox.scrollHeight;
+        }
+
+        function startNewGame() {
+            sceneIndex = 0;
+            gameStarted = true;
+            clearNarrative();
+            addNarrative("=== 새 게임 시작 ===", "");
+            setTimeout(() => {
+                nextScene();
+            }, 500);
+        }
+
+        function nextScene() {
+            if (!gameStarted) {
+                addNarrative("먼저 '새 게임'을 시작해주세요.", "");
+                return;
+            }
+
+            if (sceneIndex >= storyScenes.length) {
+                stopAutoPlay();
+                addNarrative("스토리가 끝났습니다. 새 게임을 시작하세요.", "");
+                gameStarted = false;
+                return;
+            }
+
+            const scene = storyScenes[sceneIndex];
+            addNarrative(scene.text, scene.data);
+            sceneIndex++;
+
+            if (sceneIndex >= storyScenes.length) {
+                stopAutoPlay();
+                gameStarted = false;
+            }
+        }
+
+        function toggleAutoPlay() {
+            if (autoPlayInterval) {
+                stopAutoPlay();
+            } else {
+                startAutoPlay();
+            }
+        }
+
+        function startAutoPlay() {
+            if (!gameStarted) {
+                startNewGame();
+            }
+            
+            const autoBtn = document.getElementById('auto-btn');
+            autoBtn.textContent = '⏸ 일시정지';
+            autoBtn.classList.add('auto-play');
+            
+            autoPlayInterval = setInterval(() => {
+                if (sceneIndex >= storyScenes.length) {
+                    stopAutoPlay();
+                    return;
+                }
+                nextScene();
+            }, 3000); // 3초마다 다음 장면
+        }
+
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+                
+                const autoBtn = document.getElementById('auto-btn');
+                autoBtn.textContent = '⏯ 자동 재생';
+                autoBtn.classList.remove('auto-play');
+            }
+        }
+
+        function clearNarrative() {
+            const narrativeBox = document.getElementById('narrative-box');
+            narrativeBox.innerHTML = '';
+        }
+    </script>
+</body>
+</html>

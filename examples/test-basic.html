@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apocalypse HUD - 기본 테스트</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        h1 {
+            color: #00ff41;
+            text-align: center;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 15px;
+            margin: 20px 0;
+            border-left: 3px solid #00ff41;
+        }
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #00cc33;
+        }
+        .output {
+            background: #1a1a1a;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #333;
+            min-height: 50px;
+        }
+        .hidden-data {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Apocalypse HUD 기본 테스트</h1>
+    
+    <div class="test-section">
+        <h2>프로필 업데이트</h2>
+        <button onclick="testProfile()">프로필 설정</button>
+        <div class="output" id="profile-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>스탯 업데이트</h2>
+        <button onclick="testStats()">체력 감소</button>
+        <button onclick="testStatsGood()">상태 양호</button>
+        <button onclick="testStatsCritical()">위급 상태</button>
+        <div class="output" id="stats-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>환경 업데이트</h2>
+        <button onclick="testEnvironmentSafe()">안전 지역</button>
+        <button onclick="testEnvironmentDanger()">위험 지역</button>
+        <div class="output" id="env-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>스쿼드 업데이트</h2>
+        <button onclick="testSquadSetup()">팀 편성</button>
+        <button onclick="testSquadBattle()">전투 피해</button>
+        <div class="output" id="squad-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>미션 업데이트</h2>
+        <button onclick="testMissionStart()">미션 시작</button>
+        <button onclick="testMissionProgress()">미션 진행</button>
+        <button onclick="testMissionComplete()">미션 완료</button>
+        <div class="output" id="mission-output"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>종합 시나리오</h2>
+        <button onclick="testScenario1()">시나리오 1: 탐색</button>
+        <button onclick="testScenario2()">시나리오 2: 전투</button>
+        <button onclick="testScenario3()">시나리오 3: 승리</button>
+        <div class="output" id="scenario-output"></div>
+    </div>
+
+    <!-- 숨겨진 데이터 컨테이너 (HUD가 감지할 영역) -->
+    <div id="hidden-container" class="hidden-data"></div>
+
+    <script>
+        function addData(text, outputId) {
+            const container = document.getElementById('hidden-container');
+            const output = document.getElementById(outputId);
+            
+            // 숨겨진 컨테이너에 데이터 추가 (HUD가 감지)
+            const dataDiv = document.createElement('div');
+            dataDiv.textContent = text;
+            container.appendChild(dataDiv);
+            
+            // 출력 영역에 표시 (사용자가 확인)
+            output.innerHTML = text.replace(/\[T9:[^\]]+\]/g, match => 
+                `<span style="color: #00ff41; font-weight: bold;">${match}</span>`
+            );
+        }
+
+        // 프로필 테스트
+        function testProfile() {
+            addData(
+                '새로운 오퍼레이터가 등록되었습니다. [T9:profile:name=김철수|job=전투병|funds=15000]',
+                'profile-output'
+            );
+        }
+
+        // 스탯 테스트
+        function testStats() {
+            addData(
+                '전투 중 부상을 입었습니다. [T9:stats:health=65|stamina=50|mental=70|combat=80]',
+                'stats-output'
+            );
+        }
+
+        function testStatsGood() {
+            addData(
+                '휴식을 취해 상태가 회복되었습니다. [T9:stats:health=95|stamina=90|mental=100|combat=85]',
+                'stats-output'
+            );
+        }
+
+        function testStatsCritical() {
+            addData(
+                '위급 상황! 즉각적인 치료가 필요합니다! [T9:stats:health=15|health_grade=F|stamina=10|mental=40]',
+                'stats-output'
+            );
+        }
+
+        // 환경 테스트
+        function testEnvironmentSafe() {
+            addData(
+                '안전가옥에 도착했습니다. [T9:env:time=14:30|location=안전가옥 B-7|danger=5]',
+                'env-output'
+            );
+        }
+
+        function testEnvironmentDanger() {
+            addData(
+                '경보! 적대 세력이 근처에 있습니다. [T9:env:time=22:45|location=폐허 상가|danger=85]',
+                'env-output'
+            );
+        }
+
+        // 스쿼드 테스트
+        function testSquadSetup() {
+            addData(
+                '팀이 편성되었습니다. [T9:squad:index=0|name=리더 박철수|health=100] [T9:squad:index=1|name=저격수 김영희|health=90] [T9:squad:index=2|name=의무병 이민준|health=100] [T9:squad:index=3|name=공병 최서연|health=95]',
+                'squad-output'
+            );
+        }
+
+        function testSquadBattle() {
+            addData(
+                '전투 중! 팀원들이 피해를 입었습니다. [T9:squad:id=0|health=70] [T9:squad:id=1|health=25|status=critical] [T9:squad:id=2|health=80] [T9:squad:id=3|health=0|status=dead]',
+                'squad-output'
+            );
+        }
+
+        // 미션 테스트
+        function testMissionStart() {
+            addData(
+                '새로운 미션이 할당되었습니다. [T9:mission:title=폐허 탐사 작전|progress=0]',
+                'mission-output'
+            );
+        }
+
+        function testMissionProgress() {
+            addData(
+                '목표 지점에 접근 중입니다. [T9:mission:progress=55]',
+                'mission-output'
+            );
+        }
+
+        function testMissionComplete() {
+            addData(
+                '미션 완료! 보상을 획득했습니다. [T9:mission:progress=100] [T9:profile:funds=25000]',
+                'mission-output'
+            );
+        }
+
+        // 종합 시나리오
+        function testScenario1() {
+            addData(
+                '당신은 폐허가 된 도시를 탐색하고 있습니다. [T9:profile:name=생존자 A|job=스카벤저|funds=5000] [T9:env:time=09:30|location=폐허 도시 A구역|danger=30] [T9:stats:health=85|stamina=70|mental=90|combat=60] [T9:mission:title=물자 수집|progress=20]',
+                'scenario-output'
+            );
+        }
+
+        function testScenario2() {
+            addData(
+                '적과 조우! 격렬한 전투가 벌어졌습니다. [T9:env:danger=90] [T9:stats:health=45|health_grade=D|stamina=30|mental=60] [T9:squad:id=1|health=20|status=critical] [T9:mission:progress=60]',
+                'scenario-output'
+            );
+        }
+
+        function testScenario3() {
+            addData(
+                '적을 물리치고 미션을 완수했습니다! [T9:env:danger=10] [T9:stats:health=70|stamina=40|mental=85|combat=90|combat_grade=A] [T9:mission:progress=100] [T9:profile:funds=50000]',
+                'scenario-output'
+            );
+        }
+    </script>
+</body>
+</html>
