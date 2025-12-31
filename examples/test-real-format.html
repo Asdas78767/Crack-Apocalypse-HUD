@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apocalypse HUD - 실제 포맷 테스트</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #00ff41;
+        }
+        h1 {
+            text-align: center;
+            color: #00ff41;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+        }
+        .control-panel {
+            background: #1a1a1a;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+        button:hover {
+            background: #00cc33;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.8);
+        }
+        .output-box {
+            background: #0f0f0f;
+            border: 2px solid #00ff41;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .info-block {
+            background: #1a1a1a;
+            border-left: 3px solid #00ff41;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>◢◤ 실제 포맷 테스트 ◥◣</h1>
+    
+    <div class="control-panel">
+        <h3>▶ 테스트 시나리오</h3>
+        <button onclick="testInitial()">초기 상태</button>
+        <button onclick="testProfile1()">미사카 미코토</button>
+        <button onclick="testProfile2()">캐릭터 정보 업데이트</button>
+        <button onclick="testStats()">스탯 설정</button>
+        <button onclick="testTime()">시간/위치 설정</button>
+        <button onclick="testSquad()">스쿼드 편성</button>
+        <button onclick="testMission()">임무 할당</button>
+        <button onclick="testComplete()">완전한 정보</button>
+        <button onclick="clearOutput()">클리어</button>
+    </div>
+
+    <div class="output-box" id="output"></div>
+    <div id="hidden-container" class="hidden"></div>
+
+    <script>
+        function addOutput(text) {
+            const output = document.getElementById('output');
+            const hidden = document.getElementById('hidden-container');
+            
+            // 화면에 표시
+            const div = document.createElement('div');
+            div.className = 'info-block';
+            div.textContent = text;
+            output.appendChild(div);
+            
+            // HUD가 파싱할 숨겨진 영역에 추가
+            const hiddenDiv = document.createElement('div');
+            hiddenDiv.textContent = text;
+            hidden.appendChild(hiddenDiv);
+            
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearOutput() {
+            document.getElementById('output').innerHTML = '';
+            document.getElementById('hidden-container').innerHTML = '';
+        }
+
+        function testInitial() {
+            const data = `[T0]
+-
+[ 미사카 미코토 | 미정 | 미정/미정 | ??? B ]
+[ 스탯 | 신체:미정 | 언변:미정 | 행운:미정 ]
+[ 어빌리티 | 미정 | 미정 ]
+-
+[ 2057년 10월 28일 | ??시 ??분 ]
+[ 위치 | ??? | ⚪ ]
+-
+▣ 캐릭터없음
+-
+▣ 임무없음`;
+            addOutput(data);
+        }
+
+        function testProfile1() {
+            const data = `[T1]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 5000 B ]
+[ 스탯 | 신체:미정 | 언변:미정 | 행운:미정 ]
+-
+[ 2057년 10월 28일 | 14시 30분 ]
+[ 위치 | 학원도시 제7학구 | ⚪ ]
+-
+▣ 캐릭터없음
+-
+▣ 임무없음`;
+            addOutput(data);
+        }
+
+        function testProfile2() {
+            const data = `[T2]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 7500 B ]
+[ 스탯 | 신체:85 | 언변:60 | 행운:70 ]
+-
+[ 2057년 10월 28일 | 15시 45분 ]
+[ 위치 | 제7학구 상가 | 🟡 ]
+-
+▣ 캐릭터없음
+-
+▣ 임무없음`;
+            addOutput(data);
+        }
+
+        function testStats() {
+            const data = `[T3]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 8200 B ]
+[ 스탯 | 신체:90 | 언변:75 | 행운:85 ]
+-
+[ 2057년 10월 28일 | 16시 20분 ]
+[ 위치 | 제7학구 상가 | 🟢 ]
+-
+▣ 캐릭터없음
+-
+▣ 임무: 정보 수집`;
+            addOutput(data);
+        }
+
+        function testTime() {
+            const data = `[T4]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 8200 B ]
+[ 스탯 | 신체:90 | 언변:75 | 행운:85 ]
+-
+[ 2057년 10월 28일 | 18시 00분 ]
+[ 위치 | 폐허 지구 | 🟠 ]
+-
+▣ 캐릭터없음
+-
+▣ 임무: 정보 수집`;
+            addOutput(data);
+        }
+
+        function testSquad() {
+            const data = `[T5]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 10000 B ]
+[ 스탯 | 신체:85 | 언변:75 | 행운:85 ]
+-
+[ 2057년 10월 28일 | 19시 30분 ]
+[ 위치 | 안전가옥 | ⚪ ]
+-
+▣ 시라이 쿠로코
+▣ 우이하루 카자리
+▣ 사텐 루이코
+-
+▣ 임무: 변이체 소탕`;
+            addOutput(data);
+        }
+
+        function testMission() {
+            const data = `[T6]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 10000 B ]
+[ 스탯 | 신체:70 | 언변:75 | 행운:85 ]
+-
+[ 2057년 10월 28일 | 22시 15분 ]
+[ 위치 | 전투 지역 | 🔴 ]
+-
+▣ 시라이 쿠로코
+▣ 우이하루 카자리
+▣ 사텐 루이코
+-
+▣ 임무: 변이체 소탕`;
+            addOutput(data);
+        }
+
+        function testComplete() {
+            const data = `[T10]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 25000 B ]
+[ 스탯 | 신체:95 | 언변:90 | 행운:100 ]
+[ 어빌리티 | 전자조작 LV5 | 레일건 ]
+-
+[ 2057년 10월 29일 | 02시 30분 ]
+[ 위치 | 기지 메디컬 베이 | ⚪ ]
+-
+▣ 시라이 쿠로코
+▣ 우이하루 카자리
+▣ 사텐 루이코
+-
+▣ 임무: 임무완료 - 보고 대기`;
+            addOutput(data);
+        }
+    </script>
+</body>
+</html>

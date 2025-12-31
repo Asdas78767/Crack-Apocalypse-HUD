@@ -340,7 +340,7 @@
                 <div class="hud-title">▶ BIOMETRIC STATUS</div>
                 <div class="stat-item">
                     <div class="stat-header">
-                        <span class="stat-name">HEALTH</span>
+                        <span class="stat-name">신체 (BODY)</span>
                         <span class="stat-value" id="stat-health-text">100/100 [S]</span>
                     </div>
                     <div class="stat-bar-container">
@@ -349,7 +349,7 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-header">
-                        <span class="stat-name">STAMINA</span>
+                        <span class="stat-name">신체 (STAMINA)</span>
                         <span class="stat-value" id="stat-stamina-text">100/100 [A]</span>
                     </div>
                     <div class="stat-bar-container">
@@ -358,7 +358,7 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-header">
-                        <span class="stat-name">MENTAL</span>
+                        <span class="stat-name">언변 (SPEECH)</span>
                         <span class="stat-value" id="stat-mental-text">100/100 [B]</span>
                     </div>
                     <div class="stat-bar-container">
@@ -367,7 +367,7 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-header">
-                        <span class="stat-name">COMBAT</span>
+                        <span class="stat-name">행운 (LUCK)</span>
                         <span class="stat-value" id="stat-combat-text">50/100 [C]</span>
                     </div>
                     <div class="stat-bar-container">
@@ -510,110 +510,157 @@
 
     // ==================== 텍스트 파서 ====================
     function parseT9Format(text) {
-        // [T9] 포맷 파싱: [T9:카테고리:키=값|키=값|...]
-        const t9Regex = /\[T9:([^\]]+)\]/g;
-        let match;
+        // 실제 채팅 형식 파싱
+        // [T숫자]로 시작하는 info 블록을 찾음
+        const turnMatch = text.match(/\[T(\d+)\]/);
+        if (!turnMatch) return false;
+        
         let updated = false;
-
-        while ((match = t9Regex.exec(text)) !== null) {
-            const content = match[1];
-            const parts = content.split(':');
+        
+        // 1. 프로필 파싱: [ 이름 | 직업 | 추가정보 | 자금 B ]
+        const profileMatch = text.match(/\[\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^B]+)\s*B\s*\]/);
+        if (profileMatch) {
+            const name = profileMatch[1].trim();
+            const job = profileMatch[2].trim();
+            const fundsStr = profileMatch[4].trim();
             
-            if (parts.length < 2) continue;
-            
-            const category = parts[0].toLowerCase();
-            const data = parts.slice(1).join(':');
-            const pairs = data.split('|');
-            
-            const parsedData = {};
-            pairs.forEach(pair => {
-                const [key, value] = pair.split('=');
-                if (key && value !== undefined) {
-                    parsedData[key.trim()] = value.trim();
+            if (name && name !== '미정' && name !== '???') {
+                hudData.profile.name = name;
+                updated = true;
+            }
+            if (job && job !== '미정' && job !== '???') {
+                hudData.profile.job = job;
+                updated = true;
+            }
+            if (fundsStr && fundsStr !== '???' && fundsStr !== '미정') {
+                const funds = parseInt(fundsStr.replace(/[,\s]/g, ''));
+                if (!isNaN(funds)) {
+                    hudData.profile.funds = funds;
+                    updated = true;
                 }
-            });
-
-            // 카테고리별 데이터 업데이트
-            switch (category) {
-                case 'profile':
-                case 'p':
-                    if (parsedData.name) hudData.profile.name = parsedData.name;
-                    if (parsedData.job || parsedData.class) hudData.profile.job = parsedData.job || parsedData.class;
-                    if (parsedData.funds || parsedData.money) hudData.profile.funds = parseInt(parsedData.funds || parsedData.money) || 0;
-                    updated = true;
-                    break;
-
-                case 'stats':
-                case 's':
-                    ['health', 'stamina', 'mental', 'combat'].forEach(stat => {
-                        if (parsedData[stat]) {
-                            const value = parseInt(parsedData[stat]);
-                            if (!isNaN(value)) {
-                                hudData.stats[stat].value = Math.max(0, Math.min(value, hudData.stats[stat].max));
-                            }
-                        }
-                        if (parsedData[stat + '_max']) {
-                            const maxValue = parseInt(parsedData[stat + '_max']);
-                            if (!isNaN(maxValue)) {
-                                hudData.stats[stat].max = maxValue;
-                            }
-                        }
-                        if (parsedData[stat + '_grade']) {
-                            hudData.stats[stat].grade = parsedData[stat + '_grade'];
-                        }
-                    });
-                    updated = true;
-                    break;
-
-                case 'environment':
-                case 'env':
-                case 'e':
-                    if (parsedData.time) hudData.environment.time = parsedData.time;
-                    if (parsedData.location || parsedData.loc) hudData.environment.location = parsedData.location || parsedData.loc;
-                    if (parsedData.danger) {
-                        const dangerValue = parseInt(parsedData.danger);
-                        if (!isNaN(dangerValue)) {
-                            hudData.environment.danger = Math.max(0, Math.min(dangerValue, 100));
-                        }
-                    }
-                    updated = true;
-                    break;
-
-                case 'squad':
-                case 'sq':
-                    const squadIndex = parseInt(parsedData.index || parsedData.id || '0');
-                    if (squadIndex >= 0 && squadIndex < 4) {
-                        if (parsedData.name) hudData.squad[squadIndex].name = parsedData.name;
-                        if (parsedData.status) hudData.squad[squadIndex].status = parsedData.status;
-                        if (parsedData.health) {
-                            const health = parseInt(parsedData.health);
-                            if (!isNaN(health)) {
-                                hudData.squad[squadIndex].health = Math.max(0, Math.min(health, 100));
-                                if (health <= 0) hudData.squad[squadIndex].status = 'dead';
-                            }
-                        }
-                    }
-                    updated = true;
-                    break;
-
-                case 'mission':
-                case 'm':
-                    if (parsedData.title || parsedData.name) hudData.mission.title = parsedData.title || parsedData.name;
-                    if (parsedData.progress || parsedData.prog) {
-                        const progress = parseInt(parsedData.progress || parsedData.prog);
-                        if (!isNaN(progress)) {
-                            hudData.mission.progress = Math.max(0, Math.min(progress, 100));
-                        }
-                    }
-                    updated = true;
-                    break;
             }
         }
-
+        
+        // 2. 스탯 파싱: [ 스탯 | 신체:값 | 언변:값 | 행운:값 ]
+        const statsMatch = text.match(/\[\s*스탯\s*\|([^\]]+)\]/);
+        if (statsMatch) {
+            const statsContent = statsMatch[1];
+            
+            // 신체 (health/stamina로 매핑)
+            const bodyMatch = statsContent.match(/신체\s*[:：]\s*(\d+)/);
+            if (bodyMatch) {
+                const value = parseInt(bodyMatch[1]);
+                if (!isNaN(value)) {
+                    hudData.stats.health.value = Math.min(value, hudData.stats.health.max);
+                    hudData.stats.stamina.value = Math.min(value, hudData.stats.stamina.max);
+                    updated = true;
+                }
+            }
+            
+            // 언변 (mental로 매핑)
+            const speechMatch = statsContent.match(/언변\s*[:：]\s*(\d+)/);
+            if (speechMatch) {
+                const value = parseInt(speechMatch[1]);
+                if (!isNaN(value)) {
+                    hudData.stats.mental.value = Math.min(value, hudData.stats.mental.max);
+                    updated = true;
+                }
+            }
+            
+            // 행운 (combat로 매핑)
+            const luckMatch = statsContent.match(/행운\s*[:：]\s*(\d+)/);
+            if (luckMatch) {
+                const value = parseInt(luckMatch[1]);
+                if (!isNaN(value)) {
+                    hudData.stats.combat.value = Math.min(value, hudData.stats.combat.max);
+                    updated = true;
+                }
+            }
+        }
+        
+        // 3. 날짜/시간 파싱: [ 2057년 10월 28일 | 14시 30분 ]
+        const dateTimeMatch = text.match(/\[\s*(\d+)년\s*(\d+)월\s*(\d+)일\s*\|\s*(\d+)시\s*(\d+)분\s*\]/);
+        if (dateTimeMatch) {
+            const hour = dateTimeMatch[4].padStart(2, '0');
+            const minute = dateTimeMatch[5].padStart(2, '0');
+            hudData.environment.time = `${hour}:${minute}`;
+            updated = true;
+        }
+        
+        // 4. 위치 파싱: [ 위치 | 장소명 | 위험도 ]
+        const locationMatch = text.match(/\[\s*위치\s*\|([^|]+)\|([^\]]+)\]/);
+        if (locationMatch) {
+            const location = locationMatch[1].trim();
+            const dangerIndicator = locationMatch[2].trim();
+            
+            if (location && location !== '???' && location !== '미정') {
+                hudData.environment.location = location;
+                updated = true;
+            }
+            
+            // 위험도 파싱 (⚪⚫🔴🟠🟡 등의 이모지나 텍스트)
+            let dangerLevel = 0;
+            if (dangerIndicator.includes('⚪') || dangerIndicator.toLowerCase().includes('safe')) {
+                dangerLevel = 10;
+            } else if (dangerIndicator.includes('🟢') || dangerIndicator.includes('녹색')) {
+                dangerLevel = 20;
+            } else if (dangerIndicator.includes('🟡') || dangerIndicator.includes('노란')) {
+                dangerLevel = 40;
+            } else if (dangerIndicator.includes('🟠') || dangerIndicator.includes('주황')) {
+                dangerLevel = 65;
+            } else if (dangerIndicator.includes('🔴') || dangerIndicator.includes('⚫') || dangerIndicator.includes('빨간')) {
+                dangerLevel = 90;
+            }
+            
+            if (dangerLevel > 0) {
+                hudData.environment.danger = dangerLevel;
+                updated = true;
+            }
+        }
+        
+        // 5. 캐릭터/스쿼드 파싱: ▣ 캐릭터명 또는 ▣ 캐릭터없음
+        const squadLines = text.match(/▣\s*([^\n]+)/g);
+        if (squadLines) {
+            let squadIndex = 0;
+            squadLines.forEach(line => {
+                const content = line.replace('▣', '').trim();
+                
+                if (content === '캐릭터없음' || content === '동료없음' || content === '스쿼드없음') {
+                    // 스쿼드 없음 - 초기화
+                    for (let i = 0; i < 4; i++) {
+                        hudData.squad[i] = { name: `슬롯${i+1}`, status: 'empty', health: 0 };
+                    }
+                    updated = true;
+                } else if (content && squadIndex < 4) {
+                    // 캐릭터가 있으면 스쿼드에 추가
+                    hudData.squad[squadIndex].name = content;
+                    hudData.squad[squadIndex].status = 'alive';
+                    hudData.squad[squadIndex].health = 100;
+                    squadIndex++;
+                    updated = true;
+                }
+            });
+        }
+        
+        // 6. 임무 파싱: ▣ 임무명 또는 ▣ 임무없음
+        const missionMatch = text.match(/▣\s*임무[：:]\s*([^\n]+)|▣\s*([^▣\n]+임무[^\n]*)/);
+        if (missionMatch) {
+            const mission = (missionMatch[1] || missionMatch[2] || '').trim();
+            if (mission && mission !== '임무없음' && mission !== '없음') {
+                hudData.mission.title = mission;
+                // 임무 진행률은 별도로 파싱하거나 기본값 유지
+                updated = true;
+            } else if (mission === '임무없음' || mission === '없음') {
+                hudData.mission.title = '임무 대기중';
+                hudData.mission.progress = 0;
+                updated = true;
+            }
+        }
+        
         if (updated) {
             updateHUD();
         }
-
+        
         return updated;
     }
 
@@ -625,14 +672,14 @@
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
                             const text = node.textContent || '';
-                            if (text.includes('[T9:') || text.includes('[T9]')) {
+                            if (/\[T\d+:/.test(text)) {
                                 parseT9Format(text);
                             }
                         }
                     });
                 } else if (mutation.type === 'characterData') {
                     const text = mutation.target.textContent || '';
-                    if (text.includes('[T9:') || text.includes('[T9]')) {
+                    if (/\[T\d+:/.test(text)) {
                         parseT9Format(text);
                     }
                 }
