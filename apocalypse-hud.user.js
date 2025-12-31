@@ -39,8 +39,18 @@
         mission: {
             title: '임무 대기중',
             progress: 0
+        },
+        currentTurn: 0,
+        lastTurnData: '',
+        snsData: {
+            images: [],
+            text: ''
         }
     };
+
+    // 화면 상태 관리
+    let currentScreen = 'main'; // main, status, sns
+    let consoleHistory = [];
 
     // ==================== HUD UI 생성 ====================
     function createHUD() {
@@ -311,6 +321,123 @@
                     text-shadow: 0 0 3px rgba(0, 255, 65, 0.8);
                     z-index: 1;
                 }
+
+                /* 콘솔 모듈 */
+                .console-input {
+                    width: 100%;
+                    background: rgba(0, 50, 20, 0.5);
+                    border: 1px solid #00ff41;
+                    color: #00ff41;
+                    font-family: 'Courier New', monospace;
+                    font-size: 11px;
+                    padding: 6px;
+                    margin-top: 5px;
+                    pointer-events: auto;
+                    box-sizing: border-box;
+                }
+
+                .console-input:focus {
+                    outline: none;
+                    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+                    background: rgba(0, 50, 20, 0.7);
+                }
+
+                .console-input::placeholder {
+                    color: #006622;
+                }
+
+                .console-hint {
+                    font-size: 8px;
+                    color: #00cc33;
+                    margin-top: 3px;
+                    opacity: 0.7;
+                }
+
+                /* 상태 화면 */
+                .status-screen {
+                    display: none;
+                }
+
+                .status-screen.active {
+                    display: block;
+                }
+
+                .status-content {
+                    font-size: 11px;
+                    line-height: 1.6;
+                }
+
+                .status-item {
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+                    padding-bottom: 8px;
+                }
+
+                .status-label {
+                    color: #00cc33;
+                    font-weight: bold;
+                }
+
+                .status-value {
+                    color: #00ff41;
+                    margin-left: 10px;
+                }
+
+                /* SNS 화면 */
+                .sns-screen {
+                    display: none;
+                    max-height: 500px;
+                    overflow-y: auto;
+                }
+
+                .sns-screen.active {
+                    display: block;
+                }
+
+                .sns-image {
+                    width: 100%;
+                    margin: 10px 0;
+                    border: 1px solid #00ff41;
+                    box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+                }
+
+                .sns-text {
+                    font-size: 10px;
+                    line-height: 1.6;
+                    color: #00ff41;
+                    white-space: pre-wrap;
+                    margin: 10px 0;
+                }
+
+                /* 뒤로가기 버튼 */
+                .back-button {
+                    background: #00ff41;
+                    color: #000;
+                    border: none;
+                    padding: 8px 15px;
+                    margin: 10px 0;
+                    cursor: pointer;
+                    font-weight: bold;
+                    font-size: 11px;
+                    font-family: 'Courier New', monospace;
+                    pointer-events: auto;
+                    width: 100%;
+                    box-sizing: border-box;
+                }
+
+                .back-button:hover {
+                    background: #00cc33;
+                    box-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+                }
+
+                .back-button:active {
+                    transform: scale(0.98);
+                }
+
+                /* 화면 숨김 */
+                .hidden {
+                    display: none !important;
+                }
             </style>
 
             <div class="hud-header">
@@ -318,6 +445,8 @@
                 [ SYSTEM STATUS: HACKED ]
             </div>
 
+            <!-- 메인 화면 -->
+            <div id="main-screen">
             <!-- 프로필 모듈 -->
             <div class="hud-section">
                 <div class="hud-title">▶ OPERATOR PROFILE</div>
@@ -349,7 +478,7 @@
                 </div>
                 <div class="stat-item">
                     <div class="stat-header">
-                        <span class="stat-name">신체 (STAMINA)</span>
+                        <span class="stat-name">신체 (BODY 2)</span>
                         <span class="stat-value" id="stat-stamina-text">100/100 [A]</span>
                     </div>
                     <div class="stat-bar-container">
@@ -428,9 +557,246 @@
                     <div class="mission-progress-text" id="mission-progress">0%</div>
                 </div>
             </div>
+
+            <!-- 콘솔 입력 모듈 -->
+            <div class="hud-section" id="console-section">
+                <div class="hud-title">▶ TERMINAL</div>
+                <input type="text" id="console-input" class="console-input" placeholder="명령어 입력 (/status, /sns, /back)..." />
+                <div class="console-hint">Tip: /status = 상태창 | /sns = SNS | /back = 돌아가기</div>
+            </div>
+            </div>
+            <!-- 메인 화면 끝 -->
+
+            <!-- 상태 화면 -->
+            <div id="status-screen" class="status-screen">
+                <div class="hud-title">▶ SYSTEM STATUS</div>
+                <button class="back-button" onclick="window.apocalypseHUD.switchScreen('main')">◀ 돌아가기</button>
+                <div class="status-content" id="status-content">
+                    <div class="status-item">
+                        <span class="status-label">턴:</span>
+                        <span class="status-value" id="status-turn">T0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">이름:</span>
+                        <span class="status-value" id="status-name">미확인</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">직업:</span>
+                        <span class="status-value" id="status-job">생존자</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">자금:</span>
+                        <span class="status-value" id="status-funds">0 ₿</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">신체:</span>
+                        <span class="status-value" id="status-health">100/100</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">언변:</span>
+                        <span class="status-value" id="status-mental">100/100</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">행운:</span>
+                        <span class="status-value" id="status-combat">50/100</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">시간:</span>
+                        <span class="status-value" id="status-time">--:--</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">위치:</span>
+                        <span class="status-value" id="status-location">알 수 없음</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">위험도:</span>
+                        <span class="status-value" id="status-danger">SAFE</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">스쿼드:</span>
+                        <span class="status-value" id="status-squad">없음</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">임무:</span>
+                        <span class="status-value" id="status-mission">임무 대기중</span>
+                    </div>
+                </div>
+            </div>
+            <!-- 상태 화면 끝 -->
+
+            <!-- SNS 화면 -->
+            <div id="sns-screen" class="sns-screen">
+                <div class="hud-title">▶ SNS FEED</div>
+                <button class="back-button" onclick="window.apocalypseHUD.switchScreen('main')">◀ 돌아가기</button>
+                <div id="sns-content">
+                    <div class="sns-text">SNS 데이터를 불러오는 중...</div>
+                </div>
+            </div>
+            <!-- SNS 화면 끝 -->
         `;
 
         document.body.appendChild(hudContainer);
+        
+        // 콘솔 입력 이벤트 리스너 추가
+        const consoleInput = document.getElementById('console-input');
+        consoleInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleConsoleCommand(consoleInput.value);
+                consoleInput.value = '';
+            }
+        });
+        
+        // 전역 객체에 함수 노출
+        window.apocalypseHUD = {
+            switchScreen: switchScreen
+        };
+    }
+
+    // ==================== 화면 전환 함수 ====================
+    function switchScreen(screenName) {
+        const mainScreen = document.getElementById('main-screen');
+        const statusScreen = document.getElementById('status-screen');
+        const snsScreen = document.getElementById('sns-screen');
+        
+        // 모든 화면 숨기기
+        if (mainScreen) mainScreen.classList.remove('active');
+        if (statusScreen) statusScreen.classList.remove('active');
+        if (snsScreen) snsScreen.classList.remove('active');
+        
+        // 선택된 화면 표시
+        if (screenName === 'main' && mainScreen) {
+            mainScreen.style.display = 'block';
+            if (statusScreen) statusScreen.style.display = 'none';
+            if (snsScreen) snsScreen.style.display = 'none';
+            currentScreen = 'main';
+        } else if (screenName === 'status' && statusScreen) {
+            mainScreen.style.display = 'none';
+            statusScreen.style.display = 'block';
+            statusScreen.classList.add('active');
+            if (snsScreen) snsScreen.style.display = 'none';
+            currentScreen = 'status';
+            updateStatusScreen();
+        } else if (screenName === 'sns' && snsScreen) {
+            mainScreen.style.display = 'none';
+            if (statusScreen) statusScreen.style.display = 'none';
+            snsScreen.style.display = 'block';
+            snsScreen.classList.add('active');
+            currentScreen = 'sns';
+            updateSNSScreen();
+        }
+    }
+
+    // ==================== 상태 화면 업데이트 ====================
+    function updateStatusScreen() {
+        document.getElementById('status-turn').textContent = 'T' + hudData.currentTurn;
+        document.getElementById('status-name').textContent = hudData.profile.name;
+        document.getElementById('status-job').textContent = hudData.profile.job;
+        document.getElementById('status-funds').textContent = hudData.profile.funds + ' ₿';
+        document.getElementById('status-health').textContent = hudData.stats.health.value + '/' + hudData.stats.health.max;
+        document.getElementById('status-mental').textContent = hudData.stats.mental.value + '/' + hudData.stats.mental.max;
+        document.getElementById('status-combat').textContent = hudData.stats.combat.value + '/' + hudData.stats.combat.max;
+        document.getElementById('status-time').textContent = hudData.environment.time;
+        document.getElementById('status-location').textContent = hudData.environment.location;
+        
+        const danger = hudData.environment.danger;
+        let dangerText = 'SAFE';
+        if (danger >= 75) dangerText = 'CRITICAL';
+        else if (danger >= 50) dangerText = 'DANGER';
+        else if (danger >= 25) dangerText = 'CAUTION';
+        document.getElementById('status-danger').textContent = dangerText + ' (' + danger + ')';
+        
+        const squadNames = hudData.squad
+            .filter(m => m.status !== 'empty')
+            .map(m => m.name)
+            .join(', ');
+        document.getElementById('status-squad').textContent = squadNames || '없음';
+        
+        document.getElementById('status-mission').textContent = hudData.mission.title;
+    }
+
+    // ==================== SNS 화면 업데이트 ====================
+    function updateSNSScreen() {
+        const snsContent = document.getElementById('sns-content');
+        
+        // SNS 데이터 표시
+        if (hudData.snsData.text || hudData.snsData.images.length > 0) {
+            let html = '';
+            
+            // 이미지 표시
+            if (hudData.snsData.images.length > 0) {
+                hudData.snsData.images.forEach(imgSrc => {
+                    html += `<img src="${imgSrc}" class="sns-image" alt="SNS Image" />`;
+                });
+            }
+            
+            // 텍스트 표시
+            if (hudData.snsData.text) {
+                html += `<div class="sns-text">${hudData.snsData.text}</div>`;
+            }
+            
+            snsContent.innerHTML = html;
+        } else {
+            snsContent.innerHTML = '<div class="sns-text">이 턴에 SNS 데이터가 없습니다.</div>';
+        }
+    }
+
+    // ==================== 콘솔 명령어 처리 ====================
+    function handleConsoleCommand(command) {
+        command = command.trim().toLowerCase();
+        
+        if (command === '/status') {
+            switchScreen('status');
+        } else if (command === '/sns') {
+            // 실제 채팅 입력 필드 찾기 및 !sns 입력
+            sendChatMessage('!sns');
+            // SNS 화면으로 전환
+            switchScreen('sns');
+        } else if (command === '/back') {
+            switchScreen('main');
+        } else if (command === '/help') {
+            console.log('[Apocalypse HUD] 사용 가능한 명령어:');
+            console.log('/status - 상태 정보 보기');
+            console.log('/sns - SNS 피드 보기 (채팅에 !sns 입력)');
+            console.log('/back - 메인 화면으로 돌아가기');
+        }
+        
+        // 명령어 히스토리에 추가
+        consoleHistory.push(command);
+    }
+
+    // ==================== 채팅 메시지 전송 ====================
+    function sendChatMessage(message) {
+        // 일반적인 채팅 입력 필드 선택자들
+        const possibleSelectors = [
+            'textarea[placeholder*="메시지"]',
+            'textarea[placeholder*="Message"]',
+            'textarea[id*="prompt"]',
+            'textarea[class*="input"]',
+            'input[type="text"][placeholder*="메시지"]',
+            'input[type="text"][placeholder*="Message"]',
+            '#prompt-textarea',
+            'textarea'
+        ];
+        
+        let chatInput = null;
+        for (const selector of possibleSelectors) {
+            chatInput = document.querySelector(selector);
+            if (chatInput) break;
+        }
+        
+        if (chatInput) {
+            // 입력 필드에 메시지 설정
+            chatInput.value = message;
+            chatInput.focus();
+            
+            // 이벤트 트리거 (React 등의 프레임워크 호환)
+            const inputEvent = new Event('input', { bubbles: true });
+            chatInput.dispatchEvent(inputEvent);
+            
+            console.log('[Apocalypse HUD] 채팅에 "' + message + '" 입력됨');
+        } else {
+            console.log('[Apocalypse HUD] 채팅 입력 필드를 찾을 수 없습니다.');
+        }
     }
 
     // ==================== HUD 업데이트 함수 ====================
@@ -514,6 +880,30 @@
         // [T숫자]로 시작하는 info 블록을 찾음
         const turnMatch = text.match(/\[T(\d+)\]/);
         if (!turnMatch) return false;
+        
+        // 턴 번호 저장
+        hudData.currentTurn = parseInt(turnMatch[1]);
+        
+        // 전체 턴 데이터 저장 (SNS용)
+        hudData.lastTurnData = text;
+        
+        // 이미지 추출 (img 태그 또는 URL)
+        const images = [];
+        const imgTags = text.matchAll(/<img[^>]+src="([^"]+)"/g);
+        for (const match of imgTags) {
+            images.push(match[1]);
+        }
+        const imgUrls = text.matchAll(/(https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp))/gi);
+        for (const match of imgUrls) {
+            if (!images.includes(match[1])) {
+                images.push(match[1]);
+            }
+        }
+        hudData.snsData.images = images;
+        
+        // 텍스트 저장 (이미지 제외)
+        let cleanText = text.replace(/<img[^>]*>/g, '').replace(/https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp)/gi, '').trim();
+        hudData.snsData.text = cleanText;
         
         let updated = false;
         
@@ -672,14 +1062,14 @@
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) {
                             const text = node.textContent || '';
-                            if (/\[T\d+:/.test(text)) {
+                            if (/\[T\d+\]/.test(text)) {
                                 parseT9Format(text);
                             }
                         }
                     });
                 } else if (mutation.type === 'characterData') {
                     const text = mutation.target.textContent || '';
-                    if (/\[T\d+:/.test(text)) {
+                    if (/\[T\d+\]/.test(text)) {
                         parseT9Format(text);
                     }
                 }
