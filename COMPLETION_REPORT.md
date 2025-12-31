@@ -13,7 +13,7 @@
   - 자금 (Bitcoin 단위)
 
 - ✅ BIOMETRIC STATUS (생체 상태)
-  - 신체 (BODY) - 2개 바
+  - 신체 (BODY) - 단일 바
   - 언변 (SPEECH)
   - 행운 (LUCK)
   - 등급별 색상 코딩 (S~F)
