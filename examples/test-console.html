@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apocalypse HUD - 콘솔 기능 테스트</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #0a0a0a;
+            color: #00ff41;
+        }
+        h1 {
+            text-align: center;
+            color: #00ff41;
+            text-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+        }
+        .control-panel {
+            background: #1a1a1a;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #00ff41;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+        button {
+            background: #00ff41;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+        }
+        button:hover {
+            background: #00cc33;
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.8);
+        }
+        .output-box {
+            background: #0f0f0f;
+            border: 2px solid #00ff41;
+            padding: 20px;
+            margin: 20px 0;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .info {
+            background: #1a1a1a;
+            border-left: 3px solid #00ff41;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .chat-input-area {
+            background: #1a1a1a;
+            padding: 15px;
+            margin: 20px 0;
+            border: 2px solid #ff00ff;
+        }
+        textarea {
+            width: 100%;
+            min-height: 60px;
+            background: #0a0a0a;
+            color: #00ff41;
+            border: 1px solid #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .hidden {
+            display: none;
+        }
+        .command-help {
+            background: #1a1a1a;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #ff00ff;
+            font-size: 12px;
+        }
+        .command-help code {
+            background: #000;
+            padding: 2px 6px;
+            color: #ff00ff;
+            border: 1px solid #ff00ff;
+        }
+    </style>
+</head>
+<body>
+    <h1>◢◤ 콘솔 터미널 기능 테스트 ◥◣</h1>
+    
+    <div class="info">
+        ℹ️ 이 페이지는 새로 추가된 콘솔 터미널 기능을 테스트합니다.<br>
+        <strong>HUD 우측에 있는 TERMINAL 섹션의 입력 필드를 사용하세요!</strong>
+    </div>
+
+    <div class="command-help">
+        <h3>📋 사용 가능한 명령어</h3>
+        <ul>
+            <li><code>/status</code> - 상세한 상태 정보 화면으로 전환</li>
+            <li><code>/sns</code> - 채팅에 !sns 입력 + SNS 피드 화면으로 전환</li>
+            <li><code>/back</code> - 메인 HUD 화면으로 돌아가기</li>
+            <li><code>/help</code> - 도움말 (콘솔에 출력)</li>
+        </ul>
+    </div>
+
+    <div class="control-panel">
+        <h3>▶ 데이터 주입 테스트</h3>
+        <button onclick="testFullData()">완전한 데이터 주입</button>
+        <button onclick="testCombat()">전투 시나리오</button>
+        <button onclick="testWithImages()">이미지 포함 데이터</button>
+        <button onclick="clearAll()">초기화</button>
+    </div>
+
+    <div class="chat-input-area">
+        <h3>💬 가상 채팅 입력 (SNS 명령 테스트용)</h3>
+        <p style="font-size: 11px; color: #00cc33;">
+            /sns 명령어를 입력하면 이 textarea에 자동으로 "!sns"가 입력됩니다.
+        </p>
+        <textarea id="prompt-textarea" placeholder="메시지를 입력하세요..."></textarea>
+    </div>
+
+    <div class="output-box" id="output">
+        <div class="info" style="background: transparent;">
+            🎮 시작하려면 위의 버튼을 클릭하여 데이터를 주입하세요.<br>
+            그런 다음 HUD의 TERMINAL에서 명령어를 입력해보세요!
+        </div>
+    </div>
+
+    <div id="hidden-container" class="hidden"></div>
+
+    <script>
+        function addOutput(text) {
+            const output = document.getElementById('output');
+            const hidden = document.getElementById('hidden-container');
+            
+            const div = document.createElement('div');
+            div.className = 'info';
+            div.style.background = 'transparent';
+            div.style.borderLeft = '3px solid #00ff41';
+            div.style.fontSize = '11px';
+            div.textContent = text;
+            output.appendChild(div);
+            
+            const hiddenDiv = document.createElement('div');
+            hiddenDiv.textContent = text;
+            hidden.appendChild(hiddenDiv);
+            
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function clearAll() {
+            document.getElementById('output').innerHTML = '<div class="info" style="background: transparent;">초기화됨. 새로운 데이터를 주입하세요.</div>';
+            document.getElementById('hidden-container').innerHTML = '';
+        }
+
+        function testFullData() {
+            const data = `[T5]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 15000 B ]
+[ 스탯 | 신체:90 | 언변:85 | 행운:95 ]
+[ 어빌리티 | 전자조작 LV5 | 레일건 ]
+-
+[ 2057년 10월 28일 | 19시 30분 ]
+[ 위치 | 학원도시 제7학구 안전가옥 | ⚪ ]
+-
+▣ 시라이 쿠로코
+▣ 우이하루 카자리
+▣ 사텐 루이코
+-
+▣ 임무: 정보 수집 작전`;
+            
+            addOutput(data);
+            addOutput('✅ 데이터 주입 완료! HUD에서 /status를 입력해보세요.');
+        }
+
+        function testCombat() {
+            const data = `[T12]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 15000 B ]
+[ 스탯 | 신체:65 | 언변:85 | 행운:95 ]
+-
+[ 2057년 10월 28일 | 22시 45분 ]
+[ 위치 | 폐허 지구 전투 지역 | 🔴 ]
+-
+▣ 시라이 쿠로코
+▣ 우이하루 카자리
+▣ 사텐 루이코
+-
+▣ 임무: 변이체 소탕`;
+            
+            addOutput(data);
+            addOutput('⚔️ 전투 데이터 주입! 위험도가 높습니다. /status로 확인하세요.');
+        }
+
+        function testWithImages() {
+            const data = `[T8]
+-
+[ 미사카 미코토 | 레일건 | 학생/능력자 | 12000 B ]
+[ 스탯 | 신체:85 | 언변:80 | 행운:90 ]
+-
+[ 2057년 10월 28일 | 18시 15분 ]
+[ 위치 | 제7학구 상업지구 | 🟡 ]
+-
+▣ 시라이 쿠로코
+▣ 우이하루 카자리
+-
+▣ 임무: 탐색 중
+
+[SNS 포스트]
+오늘 상업지구를 탐색했다. 생각보다 물자가 많이 남아있었다.
+https://example.com/image1.jpg
+팀원들과 함께라서 든든하다. 내일은 더 깊은 곳으로 들어갈 예정.`;
+            
+            addOutput(data);
+            addOutput('📱 이미지 포함 데이터 주입! /sns를 입력하면 SNS 피드를 볼 수 있습니다.');
+        }
+
+        // 채팅 입력 감지 (테스트용)
+        const chatInput = document.getElementById('prompt-textarea');
+        chatInput.addEventListener('input', (e) => {
+            if (e.target.value.includes('!sns')) {
+                addOutput('💬 채팅에 "!sns"가 입력되었습니다! (실제 AI는 이제 SNS 데이터를 출력합니다)');
+            }
+        });
+    </script>
+</body>
+</html>
