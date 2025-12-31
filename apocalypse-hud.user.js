@@ -68,10 +68,86 @@
                     border: 2px solid #00ff41;
                     box-shadow: 0 0 20px rgba(0, 255, 65, 0.5), inset 0 0 20px rgba(0, 255, 65, 0.1);
                     padding: 15px;
+                    padding-top: 40px;
                     z-index: 999999;
-                    pointer-events: none;
+                    pointer-events: auto;
                     user-select: none;
                     animation: hudFlicker 0.1s infinite;
+                }
+
+                #apocalypse-hud.hidden {
+                    display: none;
+                }
+
+                .hud-drag-handle {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 35px;
+                    background: rgba(0, 255, 65, 0.1);
+                    border-bottom: 1px solid #00ff41;
+                    cursor: move;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 10px;
+                    pointer-events: auto;
+                }
+
+                .hud-drag-handle:hover {
+                    background: rgba(0, 255, 65, 0.2);
+                }
+
+                .hud-drag-title {
+                    font-size: 10px;
+                    color: #00ff41;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    pointer-events: none;
+                }
+
+                .hud-toggle-btn {
+                    background: transparent;
+                    border: 1px solid #00ff41;
+                    color: #00ff41;
+                    padding: 4px 8px;
+                    cursor: pointer;
+                    font-size: 10px;
+                    font-family: 'Courier New', monospace;
+                    pointer-events: auto;
+                    transition: all 0.2s;
+                }
+
+                .hud-toggle-btn:hover {
+                    background: #00ff41;
+                    color: #000;
+                    box-shadow: 0 0 10px rgba(0, 255, 65, 0.8);
+                }
+
+                .hud-show-btn {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: rgba(0, 0, 0, 0.85);
+                    border: 2px solid #00ff41;
+                    color: #00ff41;
+                    padding: 10px 15px;
+                    cursor: pointer;
+                    font-size: 12px;
+                    font-family: 'Courier New', monospace;
+                    z-index: 999999;
+                    box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+                    pointer-events: auto;
+                }
+
+                .hud-show-btn:hover {
+                    background: #00ff41;
+                    color: #000;
+                }
+
+                .hud-show-btn.hidden {
+                    display: none;
                 }
 
                 @keyframes hudFlicker {
@@ -438,6 +514,11 @@
                     display: none !important;
                 }
             </style>
+
+            <div class="hud-drag-handle" id="hud-drag-handle">
+                <span class="hud-drag-title">≡ DRAG TO MOVE</span>
+                <button class="hud-toggle-btn" id="hud-hide-btn">[ HIDE ]</button>
+            </div>
 
             <div class="hud-header">
                 ◢◤ APOCALYPSE TACTICAL TERMINAL ◥◣<br>
