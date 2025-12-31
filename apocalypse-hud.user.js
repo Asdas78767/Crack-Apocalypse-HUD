@@ -789,6 +789,16 @@
         }
     }
 
+    // ==================== 등급 계산 함수 ====================
+    function calculateGrade(value, max = 100) {
+        const percentage = (value / max) * 100;
+        if (percentage >= 90) return 'S';  // 비범 (Exceptional)
+        if (percentage >= 80) return 'A';  // 출중 (Excellent)
+        if (percentage >= 60) return 'B';  // 평범 (Average)
+        if (percentage >= 40) return 'C';  // 부족 (Insufficient)
+        return 'D';  // 최악 (Worst)
+    }
+
     // ==================== HUD 업데이트 함수 ====================
     function updateHUD() {
         // 프로필
@@ -934,6 +944,8 @@
                 const value = parseInt(bodyMatch[1]);
                 if (!isNaN(value)) {
                     hudData.stats.health.value = Math.min(value, hudData.stats.health.max);
+                    // 자동으로 등급 계산
+                    hudData.stats.health.grade = calculateGrade(hudData.stats.health.value, hudData.stats.health.max);
                     updated = true;
                 }
             }
@@ -944,6 +956,8 @@
                 const value = parseInt(speechMatch[1]);
                 if (!isNaN(value)) {
                     hudData.stats.mental.value = Math.min(value, hudData.stats.mental.max);
+                    // 자동으로 등급 계산
+                    hudData.stats.mental.grade = calculateGrade(hudData.stats.mental.value, hudData.stats.mental.max);
                     updated = true;
                 }
             }
@@ -954,6 +968,8 @@
                 const value = parseInt(luckMatch[1]);
                 if (!isNaN(value)) {
                     hudData.stats.combat.value = Math.min(value, hudData.stats.combat.max);
+                    // 자동으로 등급 계산
+                    hudData.stats.combat.grade = calculateGrade(hudData.stats.combat.value, hudData.stats.combat.max);
                     updated = true;
                 }
             }
