@@ -1014,6 +1014,9 @@
             let squadIndex = 0;
             squadLines.forEach(line => {
                 const content = line.replace('▣', '').trim();
+                if (!content || /임무|미션/i.test(content)) {
+                    return;
+                }
                 
                 if (content === '캐릭터없음' || content === '동료없음' || content === '스쿼드없음') {
                     // 스쿼드 없음 - 초기화
@@ -1037,8 +1040,18 @@
         if (missionMatch) {
             const mission = (missionMatch[1] || missionMatch[2] || '').trim();
             if (mission && mission !== '임무없음' && mission !== '없음') {
-                hudData.mission.title = mission;
-                // 임무 진행률은 별도로 파싱하거나 기본값 유지
+                const progressMatch = mission.match(/(\d{1,3})\s*%/);
+                const progress = progressMatch ? Math.min(100, Math.max(0, parseInt(progressMatch[1]))) : 0;
+                
+                // 진행률 정보는 게이지로만 사용하고 제목에서는 제거
+                const cleanedTitle = mission
+                    .replace(/progress\s*[:=]?\s*\d{1,3}\s*%/i, '')
+                    .replace(/\(?\s*\d{1,3}\s*%\s*\)?/, '')
+                    .replace(/진행률\s*\d{1,3}\s*%/i, '')
+                    .trim();
+                
+                hudData.mission.title = cleanedTitle || mission;
+                hudData.mission.progress = progress;
                 updated = true;
             } else if (mission === '임무없음' || mission === '없음') {
                 hudData.mission.title = '임무 대기중';
