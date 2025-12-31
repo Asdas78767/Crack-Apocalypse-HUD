@@ -4,7 +4,7 @@
 // @version      1.0.0
 // @description  해킹된 아포칼립스 전술 단말기 - AI 텍스트를 실시간으로 파싱하여 사이버펑크 HUD로 시각화
 // @author       Asdas78767
-// @match        https://crack.wrtn.ai/
+// @match        https://crack.wrtn.ai/*
 // @grant        none
 // @run-at       document-end
 // ==/UserScript==
