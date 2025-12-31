@@ -898,7 +898,9 @@
         let updated = false;
         
         // 1. 프로필 파싱: [ 이름 | 직업 | 추가정보 | 자금 B ]
-        const profileMatch = text.match(/\[\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*([^B]+)\s*B\s*\]/);
+        // Use multiline mode with ^ to match lines starting with [ followed by space
+        // This prevents matching from earlier brackets like [TO] or [T29]
+        const profileMatch = text.match(/^\s*\[\s+([^|\]]+?)\s*\|\s*([^|\]]+?)\s*\|\s*([^|\]]+?)\s*\|\s*([^B|\]]+)\s*B\s*\]/m);
         if (profileMatch) {
             const name = profileMatch[1].trim();
             const job = profileMatch[2].trim();
