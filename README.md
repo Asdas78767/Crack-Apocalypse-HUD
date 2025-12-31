@@ -1,196 +1,4 @@
-# Crack Apocalypse Tactical HUD
 
-**해킹된 아포칼립스 전술 단말기** - AI 텍스트를 실시간으로 파싱하여 사이버펑크 HUD로 시각화하는 Tampermonkey 유저스크립트
-
-![Version](https://img.shields.io/badge/version-1.0.0-green)
-![License](https://img.shields.io/badge/license-MIT-blue)
-![Tampermonkey](https://img.shields.io/badge/tampermonkey-required-orange)
-
-## 🎯 프로젝트 개요
-
-본 프로젝트는 Tampermonkey를 활용하여 웹 브라우저 위에 **'해킹된 아포칼립스 전술 단말기'**를 오버레이로 구현합니다. 핵심 기능은 실시간 텍스트 파싱으로, AI가 출력하는 특정 포맷(`[T숫자]`)의 데이터를 스크립트가 감지하여 즉시 고퀄리티 그래픽 UI로 변환해 시각화합니다.
-
-### ✨ 주요 특징
-
-- **실시간 텍스트 파싱**: AI가 출력하는 `[T숫자]` 포맷 데이터를 자동 감지 및 파싱 (예: [T1], [T2], [T3] 등 - 숫자는 턴 수)
-- **5개 핵심 모듈**: 프로필, 스탯, 환경 센서, 스쿼드, 미션
-- **사이버펑크 스타일**: CRT 스캔라인, 노이즈, 글리치 효과
-- **동적 반응형 UI**: 게임 진행에 따라 실시간 업데이트
-- **콘솔 터미널**: 명령어로 화면 전환 및 기능 실행
-  - `/status` - 상세 상태 정보 보기
-  - `/sns` - SNS 피드 보기 (채팅에 !sns 자동 입력)
-  - `/back` - 메인 화면으로 복귀
-- **크로스 브라우저**: 모든 웹사이트에서 작동
-
-## 📦 설치 방법
-
-### 1. Tampermonkey 설치
-
-먼저 브라우저에 Tampermonkey 확장 프로그램을 설치합니다:
-
-- [Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo)
-- [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/)
-- [Edge](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd)
-- [Safari](https://apps.apple.com/app/tampermonkey/id1482490089)
-
-### 2. 스크립트 설치
-
-1. Tampermonkey 아이콘 클릭
-2. "새 스크립트 만들기" 선택
-3. `apocalypse-hud.user.js` 파일의 내용을 복사하여 붙여넣기
-4. `Ctrl+S` (또는 `Cmd+S`)로 저장
-
-### 3. 스크립트 활성화
-
-- Tampermonkey 아이콘을 클릭하고 "Crack Apocalypse Tactical HUD"가 활성화되어 있는지 확인
-- 웹페이지를 새로고침하면 우측 상단에 HUD가 나타납니다
-
-## 🎮 콘솔 터미널 사용법
-
-HUD 하단의 TERMINAL 섹션에서 명령어를 입력할 수 있습니다.
-
-### 사용 가능한 명령어
-
-| 명령어 | 기능 | 설명 |
-|--------|------|------|
-| `/status` | 상태 정보 보기 | 모든 게임 정보를 상세하게 표시하는 화면으로 전환 |
-| `/sns` | SNS 피드 | 채팅에 `!sns`를 자동 입력하고 SNS 화면으로 전환 |
-| `/back` | 돌아가기 | 메인 HUD 화면으로 복귀 |
-| `/help` | 도움말 | 사용 가능한 명령어 목록을 콘솔에 출력 |
-
-### 사용 예시
-
-1. **상태 확인하기**
-   ```
-   HUD TERMINAL에 입력: /status
-   → 턴 번호, 프로필, 스탯, 환경, 스쿼드, 임무를 한 화면에 표시
-   → [◀ 돌아가기] 버튼으로 메인 화면 복귀
-   ```
-
-2. **SNS 피드 보기**
-   ```
-   HUD TERMINAL에 입력: /sns
-   → 자동으로 채팅에 "!sns" 입력
-   → AI가 SNS 데이터를 출력하면 이미지와 텍스트를 단말기 스타일로 표시
-   → [◀ 돌아가기] 버튼으로 메인 화면 복귀
-   ```
-
-3. **메인 화면으로 복귀**
-   ```
-   HUD TERMINAL에 입력: /back
-   → 어느 화면에서든 메인 HUD로 돌아감
-   ```
-
-## 🎮 사용 방법
-
-### 실제 데이터 포맷
-
-이 HUD는 AI 채팅에서 다음과 같은 형식의 데이터를 자동으로 파싱합니다:
-
-```
-[T0]
--
-[ 미사카 미코토 | 레일건 | 학생/능력자 | 5000 B ]
-[ 스탯 | 신체:85 | 언변:70 | 행운:90 ]
-[ 어빌리티 | 전자조작 | 레일건 ]
--
-[ 2057년 10월 28일 | 14시 30분 ]
-[ 위치 | 학원도시 제7학구 | ⚪ ]
--
-▣ 시라이 쿠로코
-▣ 우이하루 카자리
--
-▣ 임무: 정보 수집
-```
-
-**포맷 설명**:
-- `[T숫자]`: 턴 번호 (T0, T1, T2 등)
-- `[ 이름 | 직업 | 정보 | 자금 B ]`: 캐릭터 프로필 (페르소나 이름 그대로 표시)
-- `[ 스탯 | 신체:값 | 언변:값 | 행운:값 ]`: 캐릭터 스탯
-- `[ 연도년 월월 일일 | 시시 분분 ]`: 날짜와 시간
-- `[ 위치 | 장소명 | 위험도 ]`: 위치 정보 (위험도: ⚪🟢🟡🟠🔴)
-- `▣ 캐릭터명`: 스쿼드 멤버 (최대 4명)
-- `▣ 임무: 임무명`: 현재 임무
-
-### 📋 데이터 매핑
-
-#### 1. 프로필 (Profile)
-
-```
-[ 이름 | 직업 | 추가정보 | 자금 B ]
-```
-
-- **이름**: 사용자의 페르소나 이름 (예: "미사카 미코토")
-- **직업**: 캐릭터 클래스/역할 (예: "레일건", "전투원")
-- **자금**: Bitcoin 단위 자금 (예: "5000 B")
-
-**예제**:
-```
-[ 미사카 미코토 | 레일건 | 학생/능력자 | 5000 B ]
-[ 김철수 | 스카벤저 | 생존자 | 12000 B ]
-```
-
-#### 2. 스탯 (Stats)
-
-```
-[ 스탯 | 신체:값 | 언변:값 | 행운:값 ]
-```
-
-HUD 매핑:
-- **신체**: BODY/STAMINA 바로 표시
-- **언변**: SPEECH (말하기/협상 능력)
-- **행운**: LUCK (운/전투력)
-
-**예제**:
-```
-[ 스탯 | 신체:85 | 언변:70 | 행운:90 ]
-[ 스탯 | 신체:미정 | 언변:미정 | 행운:미정 ]
-```
-
-#### 3. 날짜/시간
-
-```
-[ 2057년 10월 28일 | 14시 30분 ]
-```
-
-- HUD의 TIME 필드에 "14:30" 형식으로 표시
-
-#### 4. 위치 (Location)
-
-```
-[ 위치 | 장소명 | 위험도 ]
-```
-
-위험도 표시:
-- ⚪ (흰색): SAFE (안전)
-- 🟢 (녹색): SAFE (안전)
-- 🟡 (노란색): CAUTION (주의)
-- 🟠 (주황색): DANGER (위험)
-- 🔴 (빨간색): CRITICAL (치명적)
-- ⚫ (검은색): CRITICAL (치명적)
-
-**예제**:
-```
-[ 위치 | 학원도시 제7학구 | ⚪ ]
-[ 위치 | 폐허 지구 | 🔴 ]
-[ 위치 | ??? | ⚪ ]
-```
-
-#### 5. 스쿼드 (Squad)
-
-```
-▣ 캐릭터명
-▣ 캐릭터명
-▣ 캐릭터명
-```
-
-- 최대 4명까지 지원
-- `▣ 캐릭터없음` 또는 `▣ 동료없음`: 스쿼드 없음
-
-**예제**:
-```
-▣ 시라이 쿠로코
-▣ 우이하루 카자리
 ▣ 사텐 루이코
 ```
 
@@ -483,3 +291,24 @@ MIT License - 자유롭게 수정 및 배포 가능
 **제작자**: Asdas78767  
 **버전**: 1.0.0  
 **최종 업데이트**: 2025-12-31
+=======
+# Crack Apocalypse HUD
+
+CRT-styled Tampermonkey overlay that listens for AI text blocks formatted with a `[T9]` prefix and renders them as a tactical interface (profile, stats, environment sensors, squad status, and mission progress) on top of any page.
+
+## Quick start (demo)
+Open `demo.html` in a browser to see the HUD parse the sample `[T9]` payload and render the overlay. The HUD script is plain JavaScript, so it runs without a build step.
+
+## Using as a userscript
+1. Install Tampermonkey (or a compatible userscript manager).
+2. Create a new userscript and paste the contents of `tampermonkey-hud.user.js`, or drag the file into your browser to import it.
+3. Ensure the AI output includes a block like:
+   ```
+   [T9]
+   PROFILE: Name=Echo Grey | Job=Fixer | FundsB=12800
+   STATS: Health=78/100 (A), Armor=64/100 (B), Stamina=54/100 (C)
+   ENV: Time=23:41 | Location=Outer Wall S7 | Danger=High
+   SQUAD: Raven=Alive, Ghost=Down, Hex=Missing, Viper=Dead
+   MISSION: Breach S7 GATE // Progress=42%
+   ```
+
