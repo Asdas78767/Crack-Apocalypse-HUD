@@ -12,6 +12,9 @@
 (function() {
     'use strict';
 
+    // ==================== 상수 정의 ====================
+    const MAX_ABILITY_SV = 10.0;
+
     // ==================== 데이터 구조 ====================
     const hudData = {
         profile: {
@@ -38,6 +41,10 @@
         mission: {
             title: '임무 대기중',
             progress: 0
+        },
+        ability: {
+            name: '없음',
+            sv: 0.0
         },
         currentTurn: 0,
         lastTurnData: '',
@@ -398,35 +405,34 @@
                     z-index: 1;
                 }
 
-                /* 콘솔 모듈 */
-                .console-input {
-                    width: 100%;
-                    background: rgba(0, 50, 20, 0.5);
-                    border: 1px solid #00ff41;
+                /* 어빌리티 모듈 */
+                .ability-display {
+                    font-size: 8px;
                     color: #00ff41;
-                    font-family: 'Courier New', monospace;
-                    font-size: 9px;
-                    padding: 4px;
-                    margin-top: 4px;
-                    pointer-events: auto;
-                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    gap: 4px;
                 }
 
-                .console-input:focus {
-                    outline: none;
-                    box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
-                    background: rgba(0, 50, 20, 0.7);
-                }
-
-                .console-input::placeholder {
-                    color: #006622;
-                }
-
-                .console-hint {
-                    font-size: 7px;
+                .ability-label {
                     color: #00cc33;
-                    margin-top: 2px;
-                    opacity: 0.7;
+                }
+
+                .ability-name {
+                    color: #00ffff;
+                    font-weight: bold;
+                    text-shadow: 0 0 5px rgba(0, 255, 255, 0.5);
+                }
+
+                .ability-sv {
+                    color: #00ff41;
+                    margin-left: auto;
+                }
+
+                #ability-sv-value {
+                    font-weight: bold;
+                    color: #ffff00;
+                    text-shadow: 0 0 5px rgba(255, 255, 0, 0.5);
                 }
 
                 /* 상태 화면 */
@@ -630,11 +636,14 @@
                 </div>
             </div>
 
-            <!-- 콘솔 입력 모듈 -->
-            <div class="hud-section" id="console-section">
-                <div class="hud-title">▶ TERMINAL</div>
-                <input type="text" id="console-input" class="console-input" placeholder="명령어 입력 (/status, /sns, /back)..." />
-                <div class="console-hint">Tip: /status = 상태창 | /sns = SNS | /back = 돌아가기</div>
+            <!-- 어빌리티 모듈 -->
+            <div class="hud-section">
+                <div class="hud-title">▶ ABILITY</div>
+                <div class="ability-display">
+                    <span class="ability-label">어빌리티 |</span>
+                    <span class="ability-name" id="ability-name">없음</span>
+                    <span class="ability-sv">| <span id="ability-sv-value">0.0</span> Sv</span>
+                </div>
             </div>
             </div>
             <!-- 메인 화면 끝 -->
@@ -715,15 +724,6 @@
         showButton.className = 'hud-show-btn hidden';
         showButton.textContent = '[ SHOW HUD ]';
         document.body.appendChild(showButton);
-        
-        // 콘솔 입력 이벤트 리스너 추가
-        const consoleInput = document.getElementById('console-input');
-        consoleInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleConsoleCommand(consoleInput.value);
-                consoleInput.value = '';
-            }
-        });
         
         // 드래그 기능 추가
         setupDraggable();
@@ -910,67 +910,14 @@
         }
     }
 
-    // ==================== 콘솔 명령어 처리 ====================
-    function handleConsoleCommand(command) {
-        command = command.trim().toLowerCase();
-        
-        if (command === '/status') {
-            switchScreen('status');
-        } else if (command === '/sns') {
-            // 실제 채팅 입력 필드 찾기 및 !sns 입력
-            sendChatMessage('!sns');
-            // SNS 화면으로 전환
-            switchScreen('sns');
-        } else if (command === '/back') {
-            switchScreen('main');
-        } else if (command === '/help') {
-            console.log('[Apocalypse HUD] 사용 가능한 명령어:');
-            console.log('/status - 상태 정보 보기');
-            console.log('/sns - SNS 피드 보기 (채팅에 !sns 입력)');
-            console.log('/back - 메인 화면으로 돌아가기');
-        }
-        
-        // 명령어 히스토리에 추가
-        consoleHistory.push(command);
-    }
-
-    // ==================== 채팅 메시지 전송 ====================
-    function sendChatMessage(message) {
-        // 일반적인 채팅 입력 필드 선택자들
-        const possibleSelectors = [
-            'textarea[placeholder*="메시지"]',
-            'textarea[placeholder*="Message"]',
-            'textarea[id*="prompt"]',
-            'textarea[class*="input"]',
-            'input[type="text"][placeholder*="메시지"]',
-            'input[type="text"][placeholder*="Message"]',
-            '#prompt-textarea',
-            'textarea'
-        ];
-        
-        let chatInput = null;
-        for (const selector of possibleSelectors) {
-            chatInput = document.querySelector(selector);
-            if (chatInput) break;
-        }
-        
-        if (chatInput) {
-            // 입력 필드에 메시지 설정
-            chatInput.value = message;
-            chatInput.focus();
-            
-            // 이벤트 트리거 (React 등의 프레임워크 호환)
-            const inputEvent = new Event('input', { bubbles: true });
-            chatInput.dispatchEvent(inputEvent);
-            
-            console.log('[Apocalypse HUD] 채팅에 "' + message + '" 입력됨');
-        } else {
-            console.log('[Apocalypse HUD] 채팅 입력 필드를 찾을 수 없습니다.');
-        }
-    }
-
     // ==================== 등급 계산 함수 ====================
     function calculateGrade(value, max = 100) {
+        // Validate inputs
+        if (max <= 0) {
+            console.warn('[Apocalypse HUD] Invalid max value for grade calculation:', max);
+            return 'D';
+        }
+        
         const percentage = (value / max) * 100;
         if (percentage >= 90) return 'S';  // 비범 (Exceptional)
         if (percentage >= 80) return 'A';  // 출중 (Excellent)
@@ -1052,6 +999,10 @@
         document.getElementById('mission-title').textContent = hudData.mission.title;
         document.getElementById('mission-bar').style.width = hudData.mission.progress + '%';
         document.getElementById('mission-progress').textContent = Math.round(hudData.mission.progress) + '%';
+        
+        // 어빌리티
+        document.getElementById('ability-name').textContent = hudData.ability.name;
+        document.getElementById('ability-sv-value').textContent = hudData.ability.sv.toFixed(1);
     }
 
     // ==================== 텍스트 파서 ====================
@@ -1243,6 +1194,19 @@
             } else if (mission === '임무없음' || mission === '없음') {
                 hudData.mission.title = '임무 대기중';
                 hudData.mission.progress = 0;
+                updated = true;
+            }
+        }
+        
+        // 7. 어빌리티 파싱: [ 어빌리티 | 어빌리티명 | Sv값 Sv ]
+        const abilityMatch = text.match(/\[\s*어빌리티\s*\|\s*([^|]+?)\s*\|\s*([\d.]+)\s*Sv\s*\]/i);
+        if (abilityMatch) {
+            const abilityName = abilityMatch[1].trim();
+            const svValue = parseFloat(abilityMatch[2]);
+            
+            if (abilityName && !isNaN(svValue) && svValue >= 0 && svValue <= MAX_ABILITY_SV) {
+                hudData.ability.name = abilityName;
+                hudData.ability.sv = svValue;
                 updated = true;
             }
         }
