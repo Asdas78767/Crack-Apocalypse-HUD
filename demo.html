@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Crack Apocalypse HUD Demo</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at 30% 30%, #0f1c12, #050805 60%);
+      color: #d3ffd3;
+      font-family: "Share Tech Mono", monospace;
+      padding: 32px;
+    }
+    h1 { letter-spacing: 0.08em; }
+    pre {
+      background: rgba(255,255,255,0.03);
+      padding: 16px;
+      border: 1px solid rgba(126,255,192,0.2);
+      max-width: 960px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Output Stream (sample)</h1>
+  <pre id="ai-output">
+[T9]
+PROFILE: Name=Echo Grey | Job=Fixer | FundsB=12800
+STATS: Health=78/100 (A), Armor=64/100 (B), Stamina=54/100 (C)
+ENV: Time=23:41 | Location=Outer Wall S7 | Danger=High
+SQUAD: Raven=Alive, Ghost=Down, Hex=Missing, Viper=Dead
+MISSION: Breach S7 GATE // Progress=42%
+  </pre>
+
+  <script src="./tampermonkey-hud.user.js"></script>
+</body>
+</html>
