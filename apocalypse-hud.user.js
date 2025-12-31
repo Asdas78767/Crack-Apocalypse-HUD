@@ -61,14 +61,15 @@
                     position: fixed;
                     top: 20px;
                     right: 20px;
-                    width: 380px;
+                    width: 280px;
+                    max-width: 90vw;
                     font-family: 'Courier New', monospace;
                     color: #00ff41;
                     background: rgba(0, 0, 0, 0.85);
                     border: 2px solid #00ff41;
                     box-shadow: 0 0 20px rgba(0, 255, 65, 0.5), inset 0 0 20px rgba(0, 255, 65, 0.1);
-                    padding: 15px;
-                    padding-top: 40px;
+                    padding: 10px;
+                    padding-top: 35px;
                     z-index: 999999;
                     pointer-events: auto;
                     user-select: none;
@@ -84,14 +85,14 @@
                     top: 0;
                     left: 0;
                     right: 0;
-                    height: 35px;
+                    height: 30px;
                     background: rgba(0, 255, 65, 0.1);
                     border-bottom: 1px solid #00ff41;
                     cursor: move;
                     display: flex;
                     align-items: center;
                     justify-content: space-between;
-                    padding: 0 10px;
+                    padding: 0 8px;
                     pointer-events: auto;
                 }
 
@@ -100,7 +101,7 @@
                 }
 
                 .hud-drag-title {
-                    font-size: 10px;
+                    font-size: 9px;
                     color: #00ff41;
                     text-transform: uppercase;
                     letter-spacing: 1px;
@@ -111,9 +112,9 @@
                     background: transparent;
                     border: 1px solid #00ff41;
                     color: #00ff41;
-                    padding: 4px 8px;
+                    padding: 3px 6px;
                     cursor: pointer;
-                    font-size: 10px;
+                    font-size: 9px;
                     font-family: 'Courier New', monospace;
                     pointer-events: auto;
                     transition: all 0.2s;
@@ -132,9 +133,9 @@
                     background: rgba(0, 0, 0, 0.85);
                     border: 2px solid #00ff41;
                     color: #00ff41;
-                    padding: 10px 15px;
+                    padding: 8px 12px;
                     cursor: pointer;
-                    font-size: 12px;
+                    font-size: 11px;
                     font-family: 'Courier New', monospace;
                     z-index: 999999;
                     box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
@@ -196,9 +197,9 @@
                 }
 
                 .hud-section {
-                    margin-bottom: 12px;
+                    margin-bottom: 8px;
                     border-bottom: 1px solid rgba(0, 255, 65, 0.3);
-                    padding-bottom: 8px;
+                    padding-bottom: 6px;
                 }
 
                 .hud-section:last-child {
@@ -207,21 +208,21 @@
                 }
 
                 .hud-title {
-                    font-size: 11px;
+                    font-size: 9px;
                     color: #00ff41;
                     text-transform: uppercase;
-                    margin-bottom: 6px;
+                    margin-bottom: 4px;
                     text-shadow: 0 0 5px rgba(0, 255, 65, 0.8);
-                    letter-spacing: 2px;
+                    letter-spacing: 1px;
                 }
 
                 .hud-header {
-                    font-size: 10px;
+                    font-size: 9px;
                     color: #00cc33;
-                    margin-bottom: 10px;
+                    margin-bottom: 8px;
                     text-align: center;
                     border-bottom: 1px solid #00ff41;
-                    padding-bottom: 5px;
+                    padding-bottom: 4px;
                     animation: glitch 3s infinite;
                 }
 
@@ -234,8 +235,8 @@
 
                 /* 프로필 모듈 */
                 .profile-item {
-                    font-size: 11px;
-                    margin-bottom: 4px;
+                    font-size: 9px;
+                    margin-bottom: 3px;
                     display: flex;
                     justify-content: space-between;
                 }
@@ -251,13 +252,13 @@
 
                 /* 스탯 모듈 */
                 .stat-item {
-                    margin-bottom: 6px;
+                    margin-bottom: 5px;
                 }
 
                 .stat-header {
                     display: flex;
                     justify-content: space-between;
-                    font-size: 10px;
+                    font-size: 8px;
                     margin-bottom: 2px;
                 }
 
@@ -270,7 +271,7 @@
                 }
 
                 .stat-bar-container {
-                    height: 8px;
+                    height: 6px;
                     background: rgba(0, 50, 20, 0.5);
                     border: 1px solid #00ff41;
                     position: relative;
@@ -293,8 +294,8 @@
 
                 /* 환경 센서 모듈 */
                 .env-item {
-                    font-size: 10px;
-                    margin-bottom: 3px;
+                    font-size: 8px;
+                    margin-bottom: 2px;
                     display: flex;
                     justify-content: space-between;
                 }
@@ -309,10 +310,10 @@
 
                 .danger-indicator {
                     display: inline-block;
-                    width: 6px;
-                    height: 6px;
+                    width: 5px;
+                    height: 5px;
                     border-radius: 50%;
-                    margin-left: 5px;
+                    margin-left: 4px;
                     animation: pulse 1s infinite;
                 }
 
@@ -330,12 +331,12 @@
                 .squad-grid {
                     display: grid;
                     grid-template-columns: 1fr 1fr;
-                    gap: 6px;
+                    gap: 4px;
                 }
 
                 .squad-member {
-                    font-size: 9px;
-                    padding: 4px;
+                    font-size: 8px;
+                    padding: 3px;
                     border: 1px solid #00ff41;
                     background: rgba(0, 50, 20, 0.3);
                     position: relative;
@@ -360,18 +361,18 @@
 
                 .squad-status {
                     color: #00cc33;
-                    font-size: 8px;
+                    font-size: 7px;
                 }
 
                 /* 미션 모듈 */
                 .mission-title {
-                    font-size: 10px;
+                    font-size: 8px;
                     color: #00ff41;
-                    margin-bottom: 4px;
+                    margin-bottom: 3px;
                 }
 
                 .mission-bar-container {
-                    height: 12px;
+                    height: 10px;
                     background: rgba(0, 50, 20, 0.5);
                     border: 1px solid #00ff41;
                     position: relative;
@@ -390,7 +391,7 @@
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    font-size: 9px;
+                    font-size: 8px;
                     color: #000;
                     font-weight: bold;
                     text-shadow: 0 0 3px rgba(0, 255, 65, 0.8);
@@ -404,9 +405,9 @@
                     border: 1px solid #00ff41;
                     color: #00ff41;
                     font-family: 'Courier New', monospace;
-                    font-size: 11px;
-                    padding: 6px;
-                    margin-top: 5px;
+                    font-size: 9px;
+                    padding: 4px;
+                    margin-top: 4px;
                     pointer-events: auto;
                     box-sizing: border-box;
                 }
@@ -422,9 +423,9 @@
                 }
 
                 .console-hint {
-                    font-size: 8px;
+                    font-size: 7px;
                     color: #00cc33;
-                    margin-top: 3px;
+                    margin-top: 2px;
                     opacity: 0.7;
                 }
 
@@ -438,14 +439,14 @@
                 }
 
                 .status-content {
-                    font-size: 11px;
-                    line-height: 1.6;
+                    font-size: 9px;
+                    line-height: 1.5;
                 }
 
                 .status-item {
-                    margin-bottom: 8px;
+                    margin-bottom: 6px;
                     border-bottom: 1px solid rgba(0, 255, 65, 0.2);
-                    padding-bottom: 8px;
+                    padding-bottom: 6px;
                 }
 
                 .status-label {
@@ -455,13 +456,13 @@
 
                 .status-value {
                     color: #00ff41;
-                    margin-left: 10px;
+                    margin-left: 8px;
                 }
 
                 /* SNS 화면 */
                 .sns-screen {
                     display: none;
-                    max-height: 500px;
+                    max-height: 400px;
                     overflow-y: auto;
                 }
 
@@ -477,11 +478,11 @@
                 }
 
                 .sns-text {
-                    font-size: 10px;
-                    line-height: 1.6;
+                    font-size: 8px;
+                    line-height: 1.5;
                     color: #00ff41;
                     white-space: pre-wrap;
-                    margin: 10px 0;
+                    margin: 8px 0;
                 }
 
                 /* 뒤로가기 버튼 */
@@ -489,11 +490,11 @@
                     background: #00ff41;
                     color: #000;
                     border: none;
-                    padding: 8px 15px;
-                    margin: 10px 0;
+                    padding: 6px 12px;
+                    margin: 8px 0;
                     cursor: pointer;
                     font-weight: bold;
-                    font-size: 11px;
+                    font-size: 9px;
                     font-family: 'Courier New', monospace;
                     pointer-events: auto;
                     width: 100%;
@@ -708,6 +709,13 @@
 
         document.body.appendChild(hudContainer);
         
+        // 토글 버튼 생성
+        const showButton = document.createElement('button');
+        showButton.id = 'hud-show-button';
+        showButton.className = 'hud-show-btn hidden';
+        showButton.textContent = '[ SHOW HUD ]';
+        document.body.appendChild(showButton);
+        
         // 콘솔 입력 이벤트 리스너 추가
         const consoleInput = document.getElementById('console-input');
         consoleInput.addEventListener('keypress', (e) => {
@@ -717,10 +725,101 @@
             }
         });
         
+        // 드래그 기능 추가
+        setupDraggable();
+        
+        // 토글 기능 추가
+        setupToggle();
+        
         // 전역 객체에 함수 노출
         window.apocalypseHUD = {
             switchScreen: switchScreen
         };
+    }
+
+    // ==================== 드래그 기능 설정 ====================
+    function setupDraggable() {
+        const hud = document.getElementById('apocalypse-hud');
+        const dragHandle = document.getElementById('hud-drag-handle');
+        
+        if (!hud || !dragHandle) return;
+        
+        let isDragging = false;
+        let currentX;
+        let currentY;
+        let initialX;
+        let initialY;
+        let xOffset = 0;
+        let yOffset = 0;
+        
+        dragHandle.addEventListener('mousedown', dragStart);
+        dragHandle.addEventListener('touchstart', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('touchmove', drag);
+        document.addEventListener('mouseup', dragEnd);
+        document.addEventListener('touchend', dragEnd);
+        
+        function dragStart(e) {
+            if (e.type === 'touchstart') {
+                initialX = e.touches[0].clientX - xOffset;
+                initialY = e.touches[0].clientY - yOffset;
+            } else {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+            }
+            
+            if (e.target === dragHandle || dragHandle.contains(e.target)) {
+                isDragging = true;
+            }
+        }
+        
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                
+                if (e.type === 'touchmove') {
+                    currentX = e.touches[0].clientX - initialX;
+                    currentY = e.touches[0].clientY - initialY;
+                } else {
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                }
+                
+                xOffset = currentX;
+                yOffset = currentY;
+                
+                setTranslate(currentX, currentY, hud);
+            }
+        }
+        
+        function dragEnd(e) {
+            initialX = currentX;
+            initialY = currentY;
+            isDragging = false;
+        }
+        
+        function setTranslate(xPos, yPos, el) {
+            el.style.transform = `translate3d(${xPos}px, ${yPos}px, 0)`;
+        }
+    }
+    
+    // ==================== 토글 기능 설정 ====================
+    function setupToggle() {
+        const hud = document.getElementById('apocalypse-hud');
+        const hideBtn = document.getElementById('hud-hide-btn');
+        const showBtn = document.getElementById('hud-show-button');
+        
+        if (!hud || !hideBtn || !showBtn) return;
+        
+        hideBtn.addEventListener('click', () => {
+            hud.classList.add('hidden');
+            showBtn.classList.remove('hidden');
+        });
+        
+        showBtn.addEventListener('click', () => {
+            hud.classList.remove('hidden');
+            showBtn.classList.add('hidden');
+        });
     }
 
     // ==================== 화면 전환 함수 ====================
