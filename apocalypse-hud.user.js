@@ -1064,50 +1064,65 @@
             }
         }
         
-        // 2. 스탯 파싱: [ 스탯 | 신체:값 | 언변:값 | 행운:값 ]
-        const statsMatch = text.match(/\[\s*스탯\s*\|([^\]]+)\]/);
+        // 2. 스탯/능력치 파싱: [ 스탯 | 신체:값 | 언변:값 | 행운:값 ]
+        const statsMatch = text.match(/\[\s*(?:스탯|능력치)\s*\|([^\]]+)\]/);
         if (statsMatch) {
             const statsContent = statsMatch[1];
             
-            // 신체 (health로 매핑)
-            const bodyMatch = statsContent.match(/신체\s*[:：]\s*(\d+)/);
-            if (bodyMatch) {
-                const value = parseInt(bodyMatch[1]);
-                if (!isNaN(value)) {
-                    hudData.stats.health.value = Math.min(value, hudData.stats.health.max);
-                    // 자동으로 등급 계산
-                    hudData.stats.health.grade = calculateGrade(hudData.stats.health.value, hudData.stats.health.max);
-                    updated = true;
+            const gradeKeywordMap = {
+                '비범': 'S',
+                '출중': 'A',
+                '우수': 'A',
+                '평범': 'B',
+                '보통': 'B',
+                '부족': 'C',
+                '미흡': 'C',
+                '나쁨': 'D',
+                '최악': 'D',
+                '위험': 'D'
+            };
+            
+            const gradeToValue = { 'S': 95, 'A': 85, 'B': 70, 'C': 50, 'D': 30, 'F': 10 };
+            
+            function applyStat(statKey, rawValue) {
+                let parsedValue = parseInt(rawValue);
+                if (!isNaN(parsedValue)) {
+                    hudData.stats[statKey].value = Math.min(parsedValue, hudData.stats[statKey].max);
+                    hudData.stats[statKey].grade = calculateGrade(hudData.stats[statKey].value, hudData.stats[statKey].max);
+                    return true;
                 }
+                
+                const keywordGrade = gradeKeywordMap[rawValue];
+                if (keywordGrade) {
+                    hudData.stats[statKey].grade = keywordGrade;
+                    hudData.stats[statKey].value = gradeToValue[keywordGrade] || hudData.stats[statKey].value;
+                    return true;
+                }
+                
+                return false;
+            }
+            
+            // 신체 (health로 매핑)
+            const bodyMatch = statsContent.match(/신체\s*[:：]\s*([^\s|]+)/);
+            if (bodyMatch) {
+                if (applyStat('health', bodyMatch[1])) updated = true;
             }
             
             // 언변 (mental로 매핑)
-            const speechMatch = statsContent.match(/언변\s*[:：]\s*(\d+)/);
+            const speechMatch = statsContent.match(/언변\s*[:：]\s*([^\s|]+)/);
             if (speechMatch) {
-                const value = parseInt(speechMatch[1]);
-                if (!isNaN(value)) {
-                    hudData.stats.mental.value = Math.min(value, hudData.stats.mental.max);
-                    // 자동으로 등급 계산
-                    hudData.stats.mental.grade = calculateGrade(hudData.stats.mental.value, hudData.stats.mental.max);
-                    updated = true;
-                }
+                if (applyStat('mental', speechMatch[1])) updated = true;
             }
             
             // 행운 (combat로 매핑)
-            const luckMatch = statsContent.match(/행운\s*[:：]\s*(\d+)/);
+            const luckMatch = statsContent.match(/행운\s*[:：]\s*([^\s|]+)/);
             if (luckMatch) {
-                const value = parseInt(luckMatch[1]);
-                if (!isNaN(value)) {
-                    hudData.stats.combat.value = Math.min(value, hudData.stats.combat.max);
-                    // 자동으로 등급 계산
-                    hudData.stats.combat.grade = calculateGrade(hudData.stats.combat.value, hudData.stats.combat.max);
-                    updated = true;
-                }
+                if (applyStat('combat', luckMatch[1])) updated = true;
             }
         }
         
         // 3. 날짜/시간 파싱: [ 2057년 10월 28일 | 14시 30분 ]
-        const dateTimeMatch = text.match(/\[\s*(\d+)년\s*(\d+)월\s*(\d+)일\s*\|\s*(\d+)시\s*(\d+)분\s*\]/);
+        const dateTimeMatch = text.match(/\[\s*(\d+)년\s*(\d+)월\s*(\d+)일\s*\|\s*(\d{1,2})(?:시|:)\s*(\d{1,2})\s*분\s*\]/);
         if (dateTimeMatch) {
             const hour = dateTimeMatch[4].padStart(2, '0');
             const minute = dateTimeMatch[5].padStart(2, '0');
@@ -1147,12 +1162,15 @@
         }
         
         // 5. 캐릭터/스쿼드 파싱: ▣ 캐릭터명 또는 ▣ 캐릭터없음
+        // 미션 진행률이 포함된 라인은 스쿼드에서 제외해야 하므로 먼저 기록
+        const missionProgressLine = text.match(/▣\s*[^\[\n]+\[\s*\d{1,3}\s*%\s*\]/);
+        
         const squadLines = text.match(/▣\s*([^\n]+)/g);
         if (squadLines) {
             let squadIndex = 0;
             squadLines.forEach(line => {
                 const content = line.replace('▣', '').trim();
-                if (!content || /임무|미션/i.test(content)) {
+                if (!content || /임무|미션/i.test(content) || (missionProgressLine && line.includes(missionProgressLine[0]))) {
                     return;
                 }
                 
@@ -1173,9 +1191,16 @@
             });
         }
         
-        // 6. 임무 파싱: ▣ 임무명 또는 ▣ 임무없음
+        // 6. 임무 파싱: ▣ 임무명 또는 ▣ 임무없음 또는 진행률 포함 형식
         const missionMatch = text.match(/▣\s*임무[：:]\s*([^\n]+)|▣\s*([^▣\n]+임무[^\n]*)/);
-        if (missionMatch) {
+        const missionProgressMatch = text.match(/▣\s*([^\[\n]+?)\s*\[\s*(\d{1,3})\s*%\s*\]/);
+        if (missionProgressMatch) {
+            const missionTitle = missionProgressMatch[1].trim();
+            const progress = Math.min(100, Math.max(0, parseInt(missionProgressMatch[2])));
+            hudData.mission.title = missionTitle;
+            hudData.mission.progress = progress;
+            updated = true;
+        } else if (missionMatch) {
             const mission = (missionMatch[1] || missionMatch[2] || '').trim();
             if (mission && mission !== '임무없음' && mission !== '없음') {
                 const progressMatch = mission.match(/(\d{1,3})\s*%/);
@@ -1185,6 +1210,7 @@
                 const cleanedTitle = mission
                     .replace(/progress\s*[:=]?\s*\d{1,3}\s*%/i, '')
                     .replace(/\(?\s*\d{1,3}\s*%\s*\)?/, '')
+                    .replace(/\[\s*\d{1,3}\s*%\s*\]/, '')
                     .replace(/진행률\s*\d{1,3}\s*%/i, '')
                     .trim();
                 
