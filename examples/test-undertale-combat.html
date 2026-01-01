@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undertale Combat Overlay Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        h1 {
+            color: #333;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+        
+        .chat-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #4CAF50;
+            background: #f9f9f9;
+        }
+        
+        .chat-input-area {
+            margin-top: 20px;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            min-height: 80px;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        .instructions {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+        
+        .instructions ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 5px 0;
+        }
+        
+        .key {
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Undertale Style Combat Overlay Test</h1>
+    
+    <div class="instructions">
+        <h3>📖 사용 방법</h3>
+        <ul>
+            <li><strong>버튼 선택:</strong> <span class="key">←</span> <span class="key">→</span> 또는 <span class="key">A</span> <span class="key">D</span></li>
+            <li><strong>확인:</strong> <span class="key">Enter</span> 또는 <span class="key">Z</span></li>
+            <li><strong>취소:</strong> <span class="key">Shift</span> 또는 <span class="key">X</span></li>
+            <li><strong>FIGHT:</strong> 텍스트 입력 후 선택 → 타이밍 게임 → 막대가 중앙에 있을 때 Enter</li>
+            <li><strong>ACT:</strong> 텍스트 입력 후 선택 → 즉시 전송</li>
+            <li><strong>ITEM:</strong> 아이템 목록 표시 → <span class="key">↑</span> <span class="key">↓</span>로 선택</li>
+            <li><strong>MERCY:</strong> 자비 메시지 전송</li>
+        </ul>
+    </div>
+
+    <div class="test-container">
+        <h2>💬 가상 채팅 인터페이스</h2>
+        <div id="chat-log">
+            <div class="chat-message">
+                <strong>AI:</strong> 안녕하세요! 전투를 시작할 준비가 되었나요?
+            </div>
+        </div>
+        
+        <div class="chat-input-area">
+            <textarea id="chat-input" class="chat-input" placeholder="메시지를 입력하세요..."></textarea>
+            <button id="send-btn" class="send-message">전송</button>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>🧪 테스트 기능</h2>
+        <button onclick="simulateAIResponse()">AI 응답 시뮬레이션</button>
+        <button onclick="simulateImageResponse()">이미지 포함 응답</button>
+        <button onclick="addTestMessages()">대화 이력 추가</button>
+    </div>
+
+    <div class="instructions">
+        <h3>✨ 기능 설명</h3>
+        <ul>
+            <li><strong>상단 로그 영역:</strong> 채팅 메시지가 실시간으로 미러링됩니다</li>
+            <li><strong>중앙 박스:</strong> 입력 모드 / 전투 모드 전환</li>
+            <li><strong>하단 HUD:</strong> HP 바와 4개 커맨드 버튼 (FIGHT/ACT/ITEM/MERCY)</li>
+            <li><strong>FIGHT 미니게임:</strong> 흰색 막대를 중앙에 멈춰 타이밍 점수 획득</li>
+            <li><strong>판정:</strong> Perfect(0-5%) → Great(6-20%) → Good(21-50%) → Bad(51-80%) → Miss(81%+)</li>
+        </ul>
+    </div>
+
+    <script>
+        // 채팅 전송 시뮬레이션
+        document.getElementById('send-btn').addEventListener('click', function() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            
+            if (text) {
+                addChatMessage('User', text);
+                input.value = '';
+                
+                // AI 응답 시뮬레이션
+                setTimeout(() => {
+                    const responses = [
+                        '흥미로운 선택이군요!',
+                        '계속해보세요...',
+                        '당신의 결정은 운명을 바꿀 것입니다.',
+                        '전투가 계속됩니다!'
+                    ];
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    addChatMessage('AI', randomResponse);
+                }, 500);
+            }
+        });
+
+        // Enter 키로 전송
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                document.getElementById('send-btn').click();
+            }
+        });
+
+        function addChatMessage(sender, text) {
+            const chatLog = document.getElementById('chat-log');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            messageDiv.innerHTML = `<strong>${sender}:</strong> ${text}`;
+            chatLog.appendChild(messageDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function simulateAIResponse() {
+            const messages = [
+                '당신은 어둠 속에서 길을 잃었습니다...',
+                '앞에 몬스터가 나타났다!',
+                '* 몬스터가 당신을 노려보고 있다.',
+                '전투를 시작하시겠습니까?',
+                '* HP가 20 남았습니다. 조심하세요!'
+            ];
+            const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+            addChatMessage('AI', randomMsg);
+        }
+
+        function simulateImageResponse() {
+            const chatLog = document.getElementById('chat-log');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            messageDiv.innerHTML = `
+                <strong>AI:</strong> 여기 이미지를 보내드립니다:<br>
+                <img src="https://via.placeholder.com/300x200/000000/FFFFFF?text=UNDERTALE" 
+                     alt="Test Image" style="max-width: 100%; margin-top: 10px;">
+            `;
+            chatLog.appendChild(messageDiv);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        function addTestMessages() {
+            const messages = [
+                { sender: 'AI', text: '게임이 시작되었습니다.' },
+                { sender: 'User', text: '* 주위를 둘러본다.' },
+                { sender: 'AI', text: '* 어두운 동굴 안입니다. 앞쪽에서 소리가 들립니다.' },
+                { sender: 'User', text: '* 조심스럽게 앞으로 나아간다.' },
+                { sender: 'AI', text: '* 갑자기 그림자가 나타났다! 전투가 시작됩니다!' }
+            ];
+            
+            messages.forEach((msg, idx) => {
+                setTimeout(() => {
+                    addChatMessage(msg.sender, msg.text);
+                }, idx * 300);
+            });
+        }
+
+        // 초기 메시지
+        console.log('[Test Page] Undertale Combat Overlay 테스트 페이지가 로드되었습니다.');
+        console.log('[Test Page] 스크립트가 로드되면 화면 전체에 오버레이가 나타납니다.');
+    </script>
+
+    <!-- Undertale Combat Overlay 스크립트를 직접 인라인으로 포함 -->
+    <script>
+        // userscript를 직접 실행 (테스트용)
+        fetch('../undertale-combat.user.js')
+            .then(response => response.text())
+            .then(script => {
+                // ==UserScript== 헤더 제거하고 실행
+                const cleanScript = script.replace(/\/\/ ==UserScript==[\s\S]*?\/\/ ==\/UserScript==\s*/, '');
+                const scriptElement = document.createElement('script');
+                scriptElement.textContent = cleanScript;
+                document.body.appendChild(scriptElement);
+            })
+            .catch(err => {
+                console.error('스크립트 로드 실패:', err);
+                alert('스크립트를 로드할 수 없습니다. undertale-combat.user.js 파일이 있는지 확인하세요.');
+            });
+    </script>
+
+</body>
+</html>
