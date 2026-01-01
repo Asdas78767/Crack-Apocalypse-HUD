@@ -653,8 +653,11 @@
         let sendButton = null;
         
         for (const selector of selectors) {
-            nativeInput = document.querySelector(selector);
-            if (nativeInput && nativeInput.id !== 'ut-user-input') break;
+            const element = document.querySelector(selector);
+            if (element && element.id !== 'ut-user-input') {
+                nativeInput = element;
+                break;
+            }
         }
         
         if (nativeInput && nativeInput.id !== 'ut-user-input') {
@@ -683,8 +686,11 @@
             ];
             
             for (const selector of buttonSelectors) {
-                sendButton = document.querySelector(selector);
-                if (sendButton && !sendButton.closest('#ut-overlay-root')) break;
+                const element = document.querySelector(selector);
+                if (element && !element.closest('#ut-overlay-root')) {
+                    sendButton = element;
+                    break;
+                }
             }
             
             if (sendButton) {
@@ -701,7 +707,10 @@
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1 && node.id !== OVERLAY_ID) {
+                    // Only process element nodes that are not part of the overlay
+                    if (node.nodeType === Node.ELEMENT_NODE && 
+                        node.id !== OVERLAY_ID && 
+                        !node.closest && !node.querySelector('#' + OVERLAY_ID)) {
                         // AI 응답으로 보이는 요소 감지
                         if (node.matches && (
                             node.matches('[class*="message"]') ||
@@ -711,7 +720,8 @@
                             const text = node.textContent || '';
                             const images = node.querySelectorAll('img');
                             
-                            if (text.trim() && !text.includes('ut-overlay-root')) {
+                            // Check text content doesn't belong to overlay
+                            if (text.trim() && !node.closest('#' + OVERLAY_ID)) {
                                 addLogMessage(text, images);
                             }
                         }
