@@ -654,10 +654,10 @@
         
         for (const selector of selectors) {
             nativeInput = document.querySelector(selector);
-            if (nativeInput) break;
+            if (nativeInput && nativeInput.id !== 'ut-user-input') break;
         }
         
-        if (nativeInput) {
+        if (nativeInput && nativeInput.id !== 'ut-user-input') {
             // React/Vue 가상 DOM 호환
             const isTextarea = nativeInput.tagName === 'TEXTAREA';
             const isContentEditable = nativeInput.contentEditable === 'true';
@@ -684,12 +684,15 @@
             
             for (const selector of buttonSelectors) {
                 sendButton = document.querySelector(selector);
-                if (sendButton) break;
+                if (sendButton && !sendButton.closest('#ut-overlay-root')) break;
             }
             
             if (sendButton) {
                 setTimeout(() => sendButton.click(), 100);
             }
+        } else {
+            // No native input found, log message only goes to overlay
+            console.log('[Undertale Overlay] No native chat input found on page');
         }
     }
 
@@ -698,7 +701,7 @@
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1) {
+                    if (node.nodeType === 1 && node.id !== OVERLAY_ID) {
                         // AI 응답으로 보이는 요소 감지
                         if (node.matches && (
                             node.matches('[class*="message"]') ||
@@ -708,7 +711,7 @@
                             const text = node.textContent || '';
                             const images = node.querySelectorAll('img');
                             
-                            if (text.trim()) {
+                            if (text.trim() && !text.includes('ut-overlay-root')) {
                                 addLogMessage(text, images);
                             }
                         }
