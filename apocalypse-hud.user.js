@@ -542,9 +542,9 @@
                     <span class="profile-value" id="hud-name">미확인</span>
                 </div>
                 <div class="profile-item">
-                    <span class="profile-label">CLASS:</span>
-                    <span class="profile-value" id="hud-job">생존자</span>
-                </div>
+                        <span class="profile-label">GENDER:</span>
+                        <span class="profile-value" id="hud-job">생존자</span>
+                    </div>
                 <div class="profile-item">
                     <span class="profile-label">FUNDS:</span>
                     <span class="profile-value" id="hud-funds">0 ₿</span>
@@ -662,7 +662,7 @@
                         <span class="status-value" id="status-name">미확인</span>
                     </div>
                     <div class="status-item">
-                        <span class="status-label">직업:</span>
+                        <span class="status-label">성별:</span>
                         <span class="status-value" id="status-job">생존자</span>
                     </div>
                     <div class="status-item">
