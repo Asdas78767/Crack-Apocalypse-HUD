@@ -4,7 +4,7 @@
 // @version      1.0.0
 // @description  언더테일 스타일의 동적 전투 인터페이스로 AI 채팅을 변환
 // @author       Asdas78767
-// @match        *://*/*
+// @match        https://crack.wrtn.ai/*
 // @grant        none
 // @run-at       document-end
 // ==/UserScript==
