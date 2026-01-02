@@ -23,6 +23,7 @@
 - 키보드 전용 조작 (WASD/방향키)
 - **[📖 Undertale 오버레이 상세 가이드](UNDERTALE_GUIDE.md)**
 - **[🧪 Standalone 테스트 페이지](test-undertale-standalone.html)**
+- **[❤️ 하트 호버 UI 샘플](examples/undertale-custom-heart.html)**
 
 ---
 
