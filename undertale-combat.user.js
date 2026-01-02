@@ -72,271 +72,218 @@
         overlay.id = OVERLAY_ID;
         overlay.innerHTML = `
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+                
+                /* 토글 버튼 */
+                .ut-toggle-btn {
+                    position: fixed;
+                    top: 16px;
+                    right: 16px;
+                    background: #000000;
+                    color: #FFFFFF;
+                    border: 2px solid #FFFFFF;
+                    padding: 8px 12px;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 12px;
+                    cursor: pointer;
+                    z-index: ${Z_INDEX + 1};
+                    user-select: none;
+                }
+
+                .ut-toggle-btn:hover {
+                    border-color: #FFFF00;
+                    color: #FFFF00;
+                }
                 
                 #ut-overlay-root {
                     position: fixed;
                     inset: 0;
-                    padding: 26px;
                     width: 100vw;
                     height: 100vh;
-                    background: radial-gradient(circle at 50% 28%, #0f162b 0%, #05070d 45%, #010103 100%);
-                    color: #f7f9ff;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
+                    background: rgba(0, 0, 0, 0.9);
+                    color: #FFFFFF;
+                    font-family: 'Press Start 2P', cursive;
                     font-size: 16px;
                     z-index: ${Z_INDEX};
                     display: flex;
                     justify-content: center;
-                    align-items: stretch;
+                    align-items: center;
                     overflow: hidden;
                     user-select: none;
-                    letter-spacing: 0.2px;
+                    image-rendering: pixelated;
+                    -webkit-font-smoothing: none;
+                }
+                
+                #ut-overlay-root.hidden {
+                    display: none;
                 }
 
                 #ut-overlay-root * {
                     box-sizing: border-box;
                 }
 
-                #ut-overlay-root::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background:
-                        linear-gradient(90deg, rgba(102, 209, 255, 0.06) 1px, transparent 1px),
-                        linear-gradient(0deg, rgba(102, 209, 255, 0.06) 1px, transparent 1px);
-                    background-size: 42px 42px;
-                    opacity: 0.6;
-                    pointer-events: none;
-                }
-
-                #ut-overlay-root::after {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 45%, rgba(0,0,0,0.5) 75%, rgba(0,0,0,0.8) 100%);
-                    pointer-events: none;
+                /* 팝업 컨테이너 */
+                .popup {
+                    background: rgba(0, 0, 0, 0.95);
+                    border: 4px solid #FFFFFF;
+                    padding: 20px 22px 26px;
+                    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
                 }
 
                 #ut-frame {
                     position: relative;
-                    width: min(1180px, 100%);
-                    height: calc(100% - 12px);
+                    width: 600px;
                     display: flex;
                     flex-direction: column;
-                    gap: 14px;
-                    padding: 16px;
-                    background: rgba(0, 0, 0, 0.82);
-                    border: 3px solid #7be0ff;
-                    border-radius: 14px;
-                    box-shadow:
-                        0 0 0 2px #0d3b5c,
-                        0 0 24px rgba(66, 173, 255, 0.45),
-                        inset 0 0 20px rgba(123, 224, 255, 0.25);
-                    overflow: hidden;
+                    gap: 15px;
+                    padding: 0;
+                    background: transparent;
+                    overflow: visible;
                 }
 
-                .ut-scanlines {
-                    position: absolute;
-                    inset: 0;
-                    background: repeating-linear-gradient(
-                        to bottom,
-                        rgba(255, 255, 255, 0.03),
-                        rgba(255, 255, 255, 0.03) 3px,
-                        transparent 3px,
-                        transparent 6px
-                    );
-                    mix-blend-mode: screen;
-                    opacity: 0.45;
-                    pointer-events: none;
-                    animation: scan-move 12s linear infinite;
-                }
-
-                @keyframes scan-move {
-                    from { background-position-y: 0; }
-                    to { background-position-y: 120px; }
-                }
-
-                #ut-top-bar {
+                /* 대화창 */
+                .dialogue-container {
+                    width: 100%;
+                    height: 150px;
+                    border: 4px solid #FFFFFF;
+                    box-sizing: border-box;
+                    margin-bottom: 15px;
                     position: relative;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    border: 2px solid #66d1ff;
-                    border-radius: 10px;
-                    padding: 10px 14px;
-                    background: linear-gradient(90deg, rgba(91, 196, 255, 0.18), rgba(255, 255, 255, 0.05));
-                    box-shadow:
-                        0 0 12px rgba(102, 209, 255, 0.3) inset,
-                        0 10px 20px rgba(0,0,0,0.35),
-                        0 0 20px rgba(102, 209, 255, 0.35);
-                    text-transform: uppercase;
-                    letter-spacing: 1.5px;
-                    z-index: 2;
-                }
-
-                #ut-top-bar .ut-badge {
-                    color: #9de2ff;
-                    font-size: 13px;
-                }
-
-                #ut-top-bar .ut-top-status {
-                    display: flex;
-                    align-items: center;
-                    gap: 14px;
-                }
-
-                /* 로그 카드 */
-                #ut-log-card {
-                    flex: 1;
-                    min-height: 260px;
-                    display: flex;
-                    flex-direction: column;
-                    background: #05070d;
-                    border: 2px solid #66d1ff;
-                    border-radius: 12px;
-                    box-shadow:
-                        0 6px 22px rgba(0,0,0,0.45),
-                        0 0 18px rgba(102, 209, 255, 0.18);
-                    overflow: hidden;
-                    position: relative;
-                }
-
-                .panel-heading {
-                    font-size: 12px;
-                    letter-spacing: 2px;
-                    color: #66d1ff;
-                    padding: 8px 12px;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                    background: linear-gradient(90deg, rgba(102, 209, 255, 0.2), rgba(5, 7, 13, 0.95));
-                    text-shadow: 0 0 8px rgba(102, 209, 255, 0.45);
-                }
-
-                #ut-log-container {
-                    flex: 1;
-                    padding: 16px;
+                    padding: 25px;
+                    font-size: 18px;
+                    line-height: 1.6;
+                    background: #000000;
                     overflow-y: auto;
                     overflow-x: hidden;
-                    background: linear-gradient(180deg, rgba(7, 11, 20, 0.82), rgba(5, 7, 13, 0.96));
-                    scrollbar-width: thin;
-                    scrollbar-color: #66d1ff #020305;
                 }
-
-                #ut-log-container::-webkit-scrollbar {
-                    width: 10px;
+                
+                .dialogue-container::-webkit-scrollbar {
+                    width: 8px;
                 }
-
-                #ut-log-container::-webkit-scrollbar-track {
-                    background: #020305;
+                
+                .dialogue-container::-webkit-scrollbar-track {
+                    background: #000000;
                 }
-
-                #ut-log-container::-webkit-scrollbar-thumb {
-                    background: linear-gradient(180deg, #66d1ff, #1b86ff);
-                    border-radius: 6px;
+                
+                .dialogue-container::-webkit-scrollbar-thumb {
+                    background: #FFFFFF;
                 }
-
+                
                 .log-message {
-                    margin-bottom: 14px;
+                    margin-bottom: 10px;
                     line-height: 1.6;
                     word-wrap: break-word;
-                    padding: 10px 12px;
-                    border-radius: 8px;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(102, 209, 255, 0.25);
-                    box-shadow: 0 0 14px rgba(102, 209, 255, 0.08);
                 }
-
+                
                 .log-message.from-player {
-                    color: #ffe57a;
-                    border-color: rgba(255, 207, 102, 0.5);
-                    box-shadow: 0 0 14px rgba(255, 207, 102, 0.12);
+                    color: #FFFF00;
                 }
 
-                .log-message img {
-                    max-width: 100%;
-                    height: auto;
+                .asterisk { 
+                    margin-right: 15px; 
+                    vertical-align: top; 
+                }
+                
+                /* 공격 타이밍 화면 */
+                .attack-screen {
+                    width: 100%;
+                    height: 100%;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    background-color: #000000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10;
+                }
+                
+                .attack-screen.hidden {
+                    display: none;
+                }
+                
+                /* 타겟 바 (눈 모양 이미지) */
+                .target-bar {
+                    background-image: url('https://i.ibb.co/GkBrsc/image.png');
+                    width: 95%;
+                    height: 120px;
+                    background-size: contain;
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    position: relative;
+                }
+                
+                /* 움직이는 커서 (이미지) */
+                .attack-cursor {
+                    background-image: url('https://i.ibb.co/wM7gzg/image.png');
+                    width: 100px;
+                    height: 250px;
+                    background-size: 100% 100%;
+                    background-repeat: no-repeat;
+                    position: absolute;
+                    top: 100%;
+                    transform: translateY(-50%);
+                    left: 0;
+                    animation: moveCursor 1.5s linear infinite alternate;
+                }
+                
+                @keyframes moveCursor {
+                    0% { transform: translateX(3%) translateY(-50%); }
+                    100% { transform: translateX(calc(95% - 100px)) translateY(-50%); }
+                }
+                
+                .attack-message {
+                    color: #FFFFFF;
+                    font-size: 18px;
+                    text-align: center;
+                }
+                
+                .dialogue-text {
                     display: block;
-                    margin: 10px 0;
-                    border-radius: 6px;
-                    border: 1px solid rgba(255, 255, 255, 0.15);
+                }
+                
+                .show-attack .dialogue-text {
+                    display: none;
+                }
+                
+                .show-attack .attack-screen {
+                    display: flex;
                 }
 
                 /* 중단: 전투 박스 */
                 #ut-middle-box {
-                    min-height: 240px;
+                    min-height: 150px;
                     width: 100%;
                     border: 4px solid #ffffff;
-                    border-radius: 12px;
-                    background:
-                        radial-gradient(circle at 50% 35%, rgba(103, 197, 255, 0.14), transparent 38%),
-                        radial-gradient(circle at 30% 60%, rgba(255, 255, 255, 0.12), transparent 38%),
-                        #000000;
+                    background: #000000;
                     position: relative;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    box-shadow:
-                        0 0 0 3px rgba(102, 209, 255, 0.5),
-                        0 0 18px rgba(123, 224, 255, 0.35),
-                        inset 0 0 12px rgba(255, 255, 255, 0.08);
                     overflow: hidden;
                 }
 
-                #ut-middle-box::before,
-                #ut-middle-box::after {
-                    content: '';
-                    position: absolute;
-                    inset: 8px;
-                    border: 2px dashed rgba(255, 255, 255, 0.2);
-                    pointer-events: none;
-                }
-
-                #ut-middle-box::after {
-                    inset: 16px;
-                    border-style: solid;
-                    border-color: rgba(123, 224, 255, 0.35);
-                    filter: drop-shadow(0 0 12px rgba(123, 224, 255, 0.4));
-                }
-
                 .ut-heart-marker {
-                    position: absolute;
-                    bottom: 18px;
-                    right: 18px;
-                    font-size: 22px;
-                    color: #ff6b6b;
-                    opacity: 0.85;
-                    animation: heartFloat 3s ease-in-out infinite;
-                    pointer-events: none;
-                    text-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
-                    z-index: 2;
-                }
-
-                @keyframes heartFloat {
-                    0% { transform: translateY(0); }
-                    50% { transform: translateY(-4px); }
-                    100% { transform: translateY(0); }
+                    display: none;
                 }
 
                 #ut-user-input {
                     width: 92%;
                     height: 82%;
-                    background: rgba(0, 0, 0, 0.72);
+                    background: rgba(0, 0, 0, 0.9);
                     border: 2px solid rgba(255, 255, 255, 0.35);
-                    color: #e9f5ff;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
-                    font-size: 18px;
+                    color: #FFFFFF;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 14px;
                     padding: 12px;
                     resize: none;
                     outline: none;
-                    box-shadow:
-                        inset 0 0 18px rgba(102, 209, 255, 0.15),
-                        0 0 0 2px rgba(123, 224, 255, 0.28);
-                    border-radius: 8px;
                     position: relative;
                     z-index: 1;
                 }
 
                 #ut-user-input::placeholder {
-                    color: #9fb4c8;
+                    color: #999999;
                 }
 
                 #ut-game-canvas {
@@ -348,44 +295,51 @@
 
                 /* 하단: 상태 및 커맨드 */
                 #ut-bottom-hud {
-                    padding: 12px 16px;
+                    padding: 0;
                     display: flex;
                     flex-direction: column;
-                    gap: 14px;
-                    border: 2px solid #66d1ff;
-                    border-radius: 10px;
-                    background: linear-gradient(90deg, rgba(102, 209, 255, 0.16), rgba(5, 7, 13, 0.92));
-                    box-shadow:
-                        0 0 0 2px rgba(13, 59, 92, 0.8),
-                        0 10px 22px rgba(0,0,0,0.35);
+                    gap: 18px;
                 }
 
                 .status-bar {
                     display: flex;
                     align-items: center;
-                    gap: 22px;
-                    font-size: 18px;
+                    gap: 30px;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-bottom: 0;
+                    padding-left: 5px;
+                    box-sizing: border-box;
+                }
+                
+                .name {
+                    margin-right: 0;
                 }
 
                 .status-lv {
                     font-weight: bold;
-                    color: #b6e8ff;
+                    color: #FFFFFF;
                     letter-spacing: 1px;
                 }
 
                 .status-hp {
                     display: flex;
                     align-items: center;
-                    gap: 10px;
+                    gap: 12px;
+                }
+                
+                .hp-label {
+                    font-size: 14px;
+                    margin-top: 5px;
+                    margin-right: 0;
                 }
 
                 .hp-bar-container {
-                    width: 220px;
+                    width: 200px;
                     height: 20px;
-                    border: 2px solid #ffffff;
-                    background: #000000;
+                    border: none;
+                    background: #FF0000;
                     position: relative;
-                    box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.12);
                 }
 
                 .hp-bar-container.slim {
@@ -395,74 +349,91 @@
 
                 .hp-bar-fill {
                     height: 100%;
-                    background: linear-gradient(90deg, #f2e92b, #ffb347);
-                    box-shadow: 0 0 12px rgba(255, 231, 59, 0.65);
+                    background: #FFFF00;
                     transition: width 0.3s ease;
                 }
 
                 .hp-text {
-                    color: #fffbe7;
-                    text-shadow: 0 0 6px rgba(255, 231, 59, 0.65);
+                    color: #FFFFFF;
                 }
 
                 .status-kr {
-                    padding: 4px 10px;
-                    border: 2px solid #ffffff;
-                    border-radius: 6px;
-                    color: #fff;
-                    background: rgba(255, 255, 255, 0.05);
-                    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.08);
+                    display: none;
                 }
 
                 .status-kr.pill {
-                    padding: 6px 12px;
-                    background: rgba(123, 224, 255, 0.18);
-                    border-color: rgba(123, 224, 255, 0.8);
+                    display: none;
                 }
 
                 .command-buttons {
                     display: flex;
-                    gap: 28px;
-                    justify-content: center;
+                    gap: 10px;
+                    justify-content: space-between;
                 }
 
                 .cmd-btn {
-                    padding: 12px 22px;
-                    font-size: 18px;
+                    width: 110px;
+                    height: 38px;
+                    font-size: 14px;
                     cursor: pointer;
                     position: relative;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
-                    background: rgba(0, 0, 0, 0.6);
-                    border: 2px solid rgba(255, 255, 255, 0.45);
-                    color: #e7f7ff;
+                    font-family: 'Press Start 2P', cursive;
+                    background: #000000;
+                    color: transparent;
                     letter-spacing: 1px;
-                    border-radius: 10px;
-                    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
-                    box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+                    transition: none;
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border: none;
+                    background-repeat: no-repeat;
+                    background-size: 100% auto;
+                    background-position: 0 0;
+                }
+                
+                /* 버튼별 이미지 매핑 */
+                .cmd-btn[data-index="0"] { 
+                    background-image: url('https://i.ibb.co/GnTODZ/image.png');
+                }
+                .cmd-btn[data-index="1"] { 
+                    background-image: url('https://i.ibb.co/q15wco/image.png');
+                }
+                .cmd-btn[data-index="2"] { 
+                    background-image: url('https://i.ibb.co/v5qNts/image.png');
+                }
+                .cmd-btn[data-index="3"] { 
+                    background-image: url('https://i.ibb.co/FwOLMJ/image.png');
                 }
 
                 .cmd-btn:hover {
-                    transform: translateY(-2px);
-                    border-color: #66d1ff;
-                    box-shadow: 0 12px 20px rgba(0,0,0,0.4), 0 0 12px rgba(102, 209, 255, 0.35);
+                    background-position: 0 53%;
                 }
 
-                .cmd-btn.selected {
-                    color: #ffff8f;
-                    border-color: #ffff8f;
-                    box-shadow:
-                        0 12px 22px rgba(0,0,0,0.45),
-                        0 0 12px rgba(255, 235, 130, 0.45);
+                /* Heart appears on hover */
+                .cmd-btn:hover::before {
+                    content: '';
+                    position: absolute;
+                    top: 10px;
+                    left: 4px;
+                    width: 20px;
+                    height: 20px;
+                    display: block;
+                    background-color: #000000;
+                    background-image: url('https://i.ibb.co/pF8sGP/image.png');
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    background-size: contain;
                 }
 
-                .cmd-btn.selected::before {
+                .cmd-btn.selected::after {
                     content: '❤';
                     position: absolute;
-                    left: -18px;
+                    left: -22px;
                     top: 50%;
                     transform: translateY(-50%);
-                    color: #ff6b6b;
-                    text-shadow: 0 0 10px rgba(255, 107, 107, 0.55);
+                    color: #FF0000;
+                    font-size: 16px;
                 }
 
                 /* 숨김 클래스 */
@@ -476,16 +447,11 @@
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    background: rgba(5, 7, 13, 0.98);
-                    border: 4px solid #66d1ff;
+                    background: #000000;
+                    border: 4px solid #FFFFFF;
                     padding: 20px;
                     z-index: ${Z_INDEX + 1};
                     min-width: 320px;
-                    border-radius: 12px;
-                    box-shadow:
-                        0 0 0 2px #0d3b5c,
-                        0 18px 28px rgba(0, 0, 0, 0.45),
-                        0 0 16px rgba(102, 209, 255, 0.35);
                     display: flex;
                     flex-direction: column;
                     gap: 12px;
@@ -499,28 +465,26 @@
                 .item-add input {
                     flex: 1;
                     padding: 10px;
-                    border-radius: 8px;
-                    border: 1px solid rgba(123, 224, 255, 0.5);
-                    background: rgba(255, 255, 255, 0.04);
-                    color: #e7f7ff;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
-                    font-size: 14px;
+                    border: 2px solid #FFFFFF;
+                    background: #000000;
+                    color: #FFFFFF;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 12px;
                 }
 
                 .item-add button {
                     padding: 10px 14px;
-                    border-radius: 8px;
-                    border: 2px solid #66d1ff;
-                    background: rgba(123, 224, 255, 0.15);
-                    color: #e7f7ff;
+                    border: 2px solid #FFFFFF;
+                    background: #000000;
+                    color: #FFFFFF;
                     cursor: pointer;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
-                    transition: background 0.12s ease, transform 0.12s ease;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 12px;
                 }
 
                 .item-add button:hover {
-                    background: rgba(123, 224, 255, 0.28);
-                    transform: translateY(-1px);
+                    background: #FFFFFF;
+                    color: #000000;
                 }
 
                 .item-list {
@@ -532,93 +496,103 @@
                 .item-list li {
                     padding: 10px;
                     cursor: pointer;
-                    border-radius: 6px;
                     transition: background 0.15s ease;
                 }
 
                 .item-list li:hover {
-                    background: rgba(123, 224, 255, 0.08);
+                    background: rgba(255, 255, 255, 0.1);
                 }
 
                 .item-list li.selected {
-                    color: #ffff8f;
-                    background: rgba(255, 235, 130, 0.08);
-                    border: 1px solid rgba(255, 235, 130, 0.35);
+                    color: #FFFF00;
+                    background: rgba(255, 255, 0, 0.1);
+                    border: 1px solid #FFFF00;
                 }
 
                 .item-list li.selected::before {
                     content: '❤ ';
+                    color: #FF0000;
                 }
             </style>
 
-            <div id="ut-frame">
-                <div class="ut-scanlines"></div>
-
-                <div id="ut-top-bar">
-                    <div class="ut-badge">C2 // SANS FIGHT SIM</div>
-                    <div class="ut-top-status">
-                        <span class="status-lv">LV ${state.lv}</span>
-                        <div class="status-hp">
-                            <span class="hp-label">HP</span>
-                            <div class="hp-bar-container slim">
-                                <div class="hp-bar-fill" style="width: 100%;"></div>
+            <div id="ut-overlay-root">
+                <div class="popup">
+                    <div id="ut-frame">
+                        <div class="dialogue-container" id="dialogueBox">
+                            <div class="dialogue-text" id="ut-log-container">
+                                <div class="log-message">
+                                    <span class="asterisk">*</span>대화 내용이 여기에 표시됩니다...
+                                </div>
                             </div>
-                            <span class="hp-text">${state.hp} / ${state.maxHp}</span>
-                        </div>
-                        <span class="status-kr pill">KR</span>
-                    </div>
-                </div>
-
-                <div id="ut-log-card">
-                    <div class="panel-heading">DIALOG FEED // BATTLE CHANNEL</div>
-                    <div id="ut-log-container">
-                        <div class="log-message">대화 내용이 여기에 표시됩니다...</div>
-                    </div>
-                </div>
-
-                <div id="ut-middle-box">
-                    <div class="ut-heart-marker">❤</div>
-                    <textarea id="ut-user-input" placeholder="행동이나 대사를 입력하세요..."></textarea>
-                    <canvas id="ut-game-canvas" class="hidden"></canvas>
-                </div>
-
-                <div id="ut-bottom-hud">
-                    <div class="status-bar">
-                        <span class="status-lv">LV ${state.lv}</span>
-                        <div class="status-hp">
-                            <span>HP</span>
-                            <div class="hp-bar-container">
-                                <div class="hp-bar-fill" style="width: 100%;"></div>
+                            <div class="attack-screen hidden">
+                                <div class="target-bar">
+                                    <div class="attack-cursor"></div>
+                                </div>
                             </div>
-                            <span class="hp-text">${state.hp} / ${state.maxHp}</span>
                         </div>
-                        <span class="status-kr">KR</span>
-                    </div>
-                    <div class="command-buttons">
-                        <button class="cmd-btn selected" data-index="0">FIGHT</button>
-                        <button class="cmd-btn" data-index="1">ACT</button>
-                        <button class="cmd-btn" data-index="2">ITEM</button>
-                        <button class="cmd-btn" data-index="3">MERCY</button>
-                    </div>
-                </div>
 
-                <div id="ut-item-popup" class="hidden">
-                    <div class="item-add">
-                        <input id="ut-item-input" type="text" placeholder="예: 수퍼 포션 - HP 40 회복">
-                        <button id="ut-item-add-btn">추가</button>
+                        <div id="ut-middle-box">
+                            <textarea id="ut-user-input" placeholder="행동이나 대사를 입력하세요..."></textarea>
+                            <canvas id="ut-game-canvas" class="hidden"></canvas>
+                        </div>
+
+                        <div id="ut-bottom-hud">
+                            <div class="status-bar">
+                                <span class="name">CHARA</span>
+                                <span class="status-lv">LV ${state.lv}</span>
+                                <div class="status-hp">
+                                    <span class="hp-label">HP</span>
+                                    <div class="hp-bar-container">
+                                        <div class="hp-bar-fill" style="width: 100%;"></div>
+                                    </div>
+                                    <span class="hp-text">${state.hp} / ${state.maxHp}</span>
+                                </div>
+                            </div>
+                            <div class="command-buttons">
+                                <button class="cmd-btn selected" data-index="0"></button>
+                                <button class="cmd-btn" data-index="1"></button>
+                                <button class="cmd-btn" data-index="2"></button>
+                                <button class="cmd-btn" data-index="3"></button>
+                            </div>
+                        </div>
+
+                        <div id="ut-item-popup" class="hidden">
+                            <div class="item-add">
+                                <input id="ut-item-input" type="text" placeholder="예: 수퍼 포션 - HP 40 회복">
+                                <button id="ut-item-add-btn">추가</button>
+                            </div>
+                            <ul class="item-list"></ul>
+                        </div>
                     </div>
-                    <ul class="item-list"></ul>
                 </div>
             </div>
         `;
 
         document.body.appendChild(overlay);
+        
+        // 토글 버튼을 별도로 생성 (overlay와 독립적)
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'ut-toggle-btn';
+        toggleBtn.id = 'ut-toggle';
+        toggleBtn.textContent = 'UI 숨기기';
+        document.body.appendChild(toggleBtn);
+        
         initializeEventListeners();
         startChatObserver();
     }
 
     // ==================== 이벤트 리스너 ====================
     function initializeEventListeners() {
+        // 토글 버튼 이벤트
+        const toggleBtn = document.getElementById('ut-toggle');
+        const overlayRoot = document.getElementById('ut-overlay-root');
+        if (toggleBtn && overlayRoot) {
+            toggleBtn.addEventListener('click', () => {
+                const isHidden = overlayRoot.classList.toggle('hidden');
+                toggleBtn.textContent = isHidden ? 'UI 표시' : 'UI 숨기기';
+            });
+        }
+
         // 키보드 이벤트
         document.addEventListener('keydown', handleKeydown, true);
 
@@ -747,65 +721,56 @@
 
     function switchToFightMode() {
         state.currentMode = MODE.FIGHT;
-        const userInput = document.getElementById('ut-user-input');
-        const canvas = document.getElementById('ut-game-canvas');
+        const dialogueBox = document.getElementById('dialogueBox');
+        const attackScreen = dialogueBox.querySelector('.attack-screen');
         
-        userInput.classList.add('hidden');
-        canvas.classList.remove('hidden');
+        // 대화창에서 attack screen 표시 (이미지 기반)
+        dialogueBox.classList.add('show-attack');
+        if (attackScreen) {
+            attackScreen.classList.remove('hidden');
+        }
         
-        startMinigame();
+        startImageMinigame();
     }
 
     function switchToInputMode() {
         state.currentMode = MODE.INPUT;
-        const userInput = document.getElementById('ut-user-input');
-        const canvas = document.getElementById('ut-game-canvas');
+        const dialogueBox = document.getElementById('dialogueBox');
+        const attackScreen = dialogueBox.querySelector('.attack-screen');
         
-        userInput.classList.remove('hidden');
-        canvas.classList.add('hidden');
+        // 대화창으로 복귀
+        dialogueBox.classList.remove('show-attack');
+        if (attackScreen) {
+            attackScreen.classList.add('hidden');
+        }
         
         state.gameActive = false;
     }
 
-    function startMinigame() {
+    function startImageMinigame() {
         state.gameActive = true;
         state.barPosition = 0;
         state.barDirection = 1;
         
-        const canvas = document.getElementById('ut-game-canvas');
-        const ctx = canvas.getContext('2d');
+        // CSS 애니메이션을 사용하므로 별도의 게임 루프가 필요 없음
+        // 커서는 이미 CSS animation으로 움직이고 있음
         
-        // 캔버스 크기 설정
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        
-        // 게임 루프
-        function gameLoop() {
-            if (!state.gameActive) return;
-            
-            // 막대 이동
-            state.barPosition += state.barSpeed * state.barDirection;
-            
-            // 경계 반전
-            if (state.barPosition >= 1 || state.barPosition <= 0) {
-                state.barDirection *= -1;
-            }
-            
-            // 화면 그리기
-            drawMinigame(ctx, canvas);
-            
-            requestAnimationFrame(gameLoop);
-        }
-        
-        gameLoop();
-        
-        // Enter 키로 정지
+        // Enter 키로 정지하고 판정
         const stopHandler = (e) => {
             if (KEYS.CONFIRM.includes(e.key) && state.gameActive) {
                 e.preventDefault();
                 e.stopPropagation();
                 state.gameActive = false;
                 document.removeEventListener('keydown', stopHandler, true);
+                
+                // 커서 위치를 CSS animation에서 계산
+                const cursor = document.querySelector('.attack-cursor');
+                if (cursor) {
+                    const rect = cursor.getBoundingClientRect();
+                    const container = cursor.parentElement.getBoundingClientRect();
+                    const relativePos = (rect.left - container.left) / container.width;
+                    state.barPosition = Math.max(0, Math.min(1, relativePos));
+                }
                 
                 // 판정 계산
                 const judgment = calculateJudgment(state.barPosition);
@@ -822,37 +787,6 @@
         };
         
         document.addEventListener('keydown', stopHandler, true);
-    }
-
-    function drawMinigame(ctx, canvas) {
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        // 배경
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, width, height);
-        
-        // 눈 모양 타원 (중앙)
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.ellipse(width / 2, height / 2, width * 0.35, height * 0.25, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // 중앙선 (타겟)
-        ctx.strokeStyle = '#ff0000';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(width / 2 - 5, height / 2 - height * 0.25);
-        ctx.lineTo(width / 2 - 5, height / 2 + height * 0.25);
-        ctx.moveTo(width / 2 + 5, height / 2 - height * 0.25);
-        ctx.lineTo(width / 2 + 5, height / 2 + height * 0.25);
-        ctx.stroke();
-        
-        // 움직이는 흰색 막대
-        const barX = (width * 0.15) + (state.barPosition * width * 0.7);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(barX - 3, height / 2 - height * 0.25, 6, height * 0.5);
     }
 
     function calculateJudgment(position) {
