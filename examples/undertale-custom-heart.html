@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Undertale UI - Custom Heart</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* =========================================
+           1. 기본 설정
+           ========================================= */
+        :root {
+            --bg-black: #000000;
+            --ut-white: #FFFFFF;
+            --ut-red: #FF0000;
+            --ut-yellow: #FFFF00;
+            --container-width: 600px;
+            --ut-orange: #ffa500;
+            --ut-mercy: #ffb347;
+            --heart-size: 20px;
+            --box-padding: 25px;
+        }
+
+        body {
+            background-color: var(--bg-black);
+            color: var(--ut-white);
+            font-family: 'Press Start 2P', cursive;
+            image-rendering: pixelated;
+            -webkit-font-smoothing: antialiased;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none;
+            position: relative;
+        }
+
+        .popup {
+            background: rgba(0, 0, 0, 0.9);
+            border: 4px solid var(--ut-white);
+            padding: 20px 22px 26px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+        }
+
+        .toggle-ui {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            background: var(--bg-black);
+            color: var(--ut-white);
+            border: 2px solid var(--ut-white);
+            padding: 8px 12px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .toggle-ui:hover {
+            border-color: var(--ut-yellow);
+            color: var(--ut-yellow);
+        }
+
+        .game-wrapper {
+            width: var(--container-width);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* =========================================
+           2. 대화창 및 공격창
+           ========================================= */
+        .dialogue-container {
+            width: 100%;
+            height: 150px;
+            border: 4px solid var(--ut-white);
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            position: relative;
+            padding: var(--box-padding); 
+            font-size: 24px;
+            line-height: 1.6;
+        }
+
+        .asterisk { margin-right: 15px; vertical-align: top; }
+
+        /* 공격 타이밍 화면 */
+        .attack-screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0; left: 0;
+            background-color: var(--bg-black);
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        /* 타겟 (눈 모양) */
+        .target-bar {
+            width: 95%;
+            height: 120px;
+            border: 4px solid var(--ut-white);
+            border-radius: 999px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .target-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 4px;
+            background-color: var(--ut-red);
+            transform: translateX(-50%);
+        }
+
+        /* 움직이는 커서 */
+        .attack-cursor {
+            width: 10px; 
+            height: 140px;
+            background-color: var(--ut-white);
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 3%;
+            animation: moveCursor 1.5s linear infinite alternate;
+            box-shadow: 0 0 8px var(--ut-white);
+        }
+
+        @keyframes moveCursor {
+            0% { left: 3%; }
+            100% { left: 94%; }
+        }
+
+        .show-attack .dialogue-text { display: none; }
+        .show-attack .attack-screen { display: flex; }
+
+
+        /* =========================================
+           3. 상태바 (Status Bar)
+           ========================================= */
+        .status-bar {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            height: 30px;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 18px;
+            padding-left: 5px;
+            box-sizing: border-box;
+        }
+        
+        .name { margin-right: 30px; }
+        .lv { margin-right: 50px; } 
+        .hp-label { font-size: 14px; margin-top: 5px; margin-right: 12px; }
+        
+        .hp-gauge-bg {
+            width: 30px; height: 20px; background-color: var(--ut-red); margin-right: 12px;
+        }
+        .hp-gauge-fill {
+            width: 100%; height: 100%; background-color: var(--ut-yellow);
+        }
+
+        /* =========================================
+           4. 버튼 영역 (하트 추가 수정됨)
+           ========================================= */
+        .button-row {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            height: 38px; 
+        }
+
+        .btn {
+            width: 110px;  /* 너비 고정 */
+            height: 38px;  /* 높이 고정 */
+            cursor: pointer;
+            position: relative;
+            border: 4px solid var(--ut-white);
+            background-color: var(--bg-black);
+            box-sizing: border-box;
+        }
+
+        .btn::before {
+            content: attr(data-label);
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--btn-color, var(--ut-white));
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        /* 마우스 올렸을 때: 강조 */
+        .btn:hover {
+            border-color: var(--btn-color, var(--ut-white));
+            box-shadow: 0 0 8px var(--btn-color, var(--ut-white));
+        }
+
+        /* [추가된 기능] 마우스 올렸을 때 하트 이미지 표시 */
+        .btn:hover::after {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 6px;
+            width: var(--heart-size); 
+            height: var(--heart-size);
+            display: block;
+            background: var(--ut-red);
+            /* 하트 형태 기본 폴리곤 (브라우저 호환용): 상단 각진 라인 → 하단 포인트 */
+            clip-path: polygon(50% 10%, 62% 2%, 75% 6%, 88% 20%, 88% 36%, 50% 80%, 12% 36%, 12% 20%, 25% 6%, 38% 2%);
+        }
+
+        @supports (clip-path: path('M16 28L2 12C-2 7 0 0 8 0c4 0 7 3 8 5 1-2 4-5 8-5 8 0 10 7 6 12z')) {
+            .btn:hover::after {
+                /* 하트 형태 path (상단 두 곡선 + 하단 포인트), 요소 크기에 맞춰 자동 스케일 */
+                clip-path: path('M16 28L2 12C-2 7 0 0 8 0c4 0 7 3 8 5 1-2 4-5 8-5 8 0 10 7 6 12z');
+            }
+        }
+
+        /* 색상 매핑 */
+        .btn-fight { --btn-color: var(--ut-red); }
+        .btn-act   { --btn-color: var(--ut-yellow); }
+        .btn-item  { --btn-color: var(--ut-orange); }
+        .btn-mercy { --btn-color: var(--ut-mercy); }
+
+        /* 하단 영역 숨김 */
+        .hide-bottom .status-bar,
+        .hide-bottom .button-row {
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <button class="toggle-ui" id="toggleUI">UI 숨기기</button>
+
+    <div class="popup">
+    <div class="game-wrapper" id="gameWrapper">
+        
+        <div class="dialogue-container" id="dialogueBox">
+            <div class="dialogue-text">
+                <span class="asterisk">*</span>마우스를 올리면<br>
+                <span class="asterisk">*</span>지정된 하트가 나타납니다.
+            </div>
+            
+            <div class="attack-screen">
+                <div class="target-bar">
+                    <div class="attack-cursor"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <span class="name">CHARA</span>
+            <span class="lv">LV 1</span>
+            
+            <span class="hp-label">HP</span>
+            <div class="hp-gauge-bg">
+                <div class="hp-gauge-fill"></div>
+            </div>
+            <span class="hp-text">20 / 20</span>
+        </div>
+
+        <div class="button-row">
+            <div class="btn btn-fight" data-label="FIGHT" onclick="toggleAttack()"></div>
+            <div class="btn btn-act" data-label="ACT"></div>
+            <div class="btn btn-item" data-label="ITEM"></div>
+            <div class="btn btn-mercy" data-label="MERCY"></div>
+        </div>
+
+    </div>
+    </div>
+
+    <script>
+        function toggleAttack() {
+            const box = document.getElementById('dialogueBox');
+            box.classList.toggle('show-attack');
+        }
+
+        (function initToggle() {
+            const btn = document.getElementById('toggleUI');
+            const wrapper = document.getElementById('gameWrapper');
+            if (!btn || !wrapper) return;
+            btn.addEventListener('click', () => {
+                const hidden = wrapper.classList.toggle('hide-bottom');
+                btn.textContent = hidden ? 'UI 펼치기' : 'UI 숨기기';
+            });
+        })();
+    </script>
+
+</body>
+</html>
