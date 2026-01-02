@@ -72,7 +72,7 @@
         overlay.id = OVERLAY_ID;
         overlay.innerHTML = `
             <style>
-                @import url('https://fonts.googleapis.com/css2?family=DotGothic16&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
                 
                 #ut-overlay-root {
                     position: fixed;
@@ -80,263 +80,124 @@
                     padding: 26px;
                     width: 100vw;
                     height: 100vh;
-                    background: radial-gradient(circle at 50% 28%, #0f162b 0%, #05070d 45%, #010103 100%);
-                    color: #f7f9ff;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
+                    background: #000000;
+                    color: #FFFFFF;
+                    font-family: 'Press Start 2P', cursive;
                     font-size: 16px;
                     z-index: ${Z_INDEX};
                     display: flex;
                     justify-content: center;
-                    align-items: stretch;
+                    align-items: center;
                     overflow: hidden;
                     user-select: none;
-                    letter-spacing: 0.2px;
+                    image-rendering: pixelated;
+                    -webkit-font-smoothing: none;
                 }
 
                 #ut-overlay-root * {
                     box-sizing: border-box;
                 }
 
-                #ut-overlay-root::before {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background:
-                        linear-gradient(90deg, rgba(102, 209, 255, 0.06) 1px, transparent 1px),
-                        linear-gradient(0deg, rgba(102, 209, 255, 0.06) 1px, transparent 1px);
-                    background-size: 42px 42px;
-                    opacity: 0.6;
-                    pointer-events: none;
-                }
-
-                #ut-overlay-root::after {
-                    content: '';
-                    position: absolute;
-                    inset: 0;
-                    background: radial-gradient(circle at 50% 50%, transparent 0%, transparent 45%, rgba(0,0,0,0.5) 75%, rgba(0,0,0,0.8) 100%);
-                    pointer-events: none;
-                }
-
                 #ut-frame {
                     position: relative;
-                    width: min(1180px, 100%);
-                    height: calc(100% - 12px);
+                    width: min(600px, 90%);
                     display: flex;
                     flex-direction: column;
-                    gap: 14px;
-                    padding: 16px;
-                    background: rgba(0, 0, 0, 0.82);
-                    border: 3px solid #7be0ff;
-                    border-radius: 14px;
-                    box-shadow:
-                        0 0 0 2px #0d3b5c,
-                        0 0 24px rgba(66, 173, 255, 0.45),
-                        inset 0 0 20px rgba(123, 224, 255, 0.25);
-                    overflow: hidden;
+                    gap: 15px;
+                    padding: 0;
+                    background: transparent;
+                    overflow: visible;
                 }
 
-                .ut-scanlines {
-                    position: absolute;
-                    inset: 0;
-                    background: repeating-linear-gradient(
-                        to bottom,
-                        rgba(255, 255, 255, 0.03),
-                        rgba(255, 255, 255, 0.03) 3px,
-                        transparent 3px,
-                        transparent 6px
-                    );
-                    mix-blend-mode: screen;
-                    opacity: 0.45;
-                    pointer-events: none;
-                    animation: scan-move 12s linear infinite;
-                }
-
-                @keyframes scan-move {
-                    from { background-position-y: 0; }
-                    to { background-position-y: 120px; }
-                }
-
-                #ut-top-bar {
+                /* 대화창 */
+                .dialogue-container {
+                    width: 100%;
+                    height: 150px;
+                    border: 4px solid #FFFFFF;
+                    box-sizing: border-box;
+                    margin-bottom: 15px;
                     position: relative;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    border: 2px solid #66d1ff;
-                    border-radius: 10px;
-                    padding: 10px 14px;
-                    background: linear-gradient(90deg, rgba(91, 196, 255, 0.18), rgba(255, 255, 255, 0.05));
-                    box-shadow:
-                        0 0 12px rgba(102, 209, 255, 0.3) inset,
-                        0 10px 20px rgba(0,0,0,0.35),
-                        0 0 20px rgba(102, 209, 255, 0.35);
-                    text-transform: uppercase;
-                    letter-spacing: 1.5px;
-                    z-index: 2;
-                }
-
-                #ut-top-bar .ut-badge {
-                    color: #9de2ff;
-                    font-size: 13px;
-                }
-
-                #ut-top-bar .ut-top-status {
-                    display: flex;
-                    align-items: center;
-                    gap: 14px;
-                }
-
-                /* 로그 카드 */
-                #ut-log-card {
-                    flex: 1;
-                    min-height: 260px;
-                    display: flex;
-                    flex-direction: column;
-                    background: #05070d;
-                    border: 2px solid #66d1ff;
-                    border-radius: 12px;
-                    box-shadow:
-                        0 6px 22px rgba(0,0,0,0.45),
-                        0 0 18px rgba(102, 209, 255, 0.18);
-                    overflow: hidden;
-                    position: relative;
-                }
-
-                .panel-heading {
-                    font-size: 12px;
-                    letter-spacing: 2px;
-                    color: #66d1ff;
-                    padding: 8px 12px;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                    background: linear-gradient(90deg, rgba(102, 209, 255, 0.2), rgba(5, 7, 13, 0.95));
-                    text-shadow: 0 0 8px rgba(102, 209, 255, 0.45);
-                }
-
-                #ut-log-container {
-                    flex: 1;
-                    padding: 16px;
-                    overflow-y: auto;
-                    overflow-x: hidden;
-                    background: linear-gradient(180deg, rgba(7, 11, 20, 0.82), rgba(5, 7, 13, 0.96));
-                    scrollbar-width: thin;
-                    scrollbar-color: #66d1ff #020305;
-                }
-
-                #ut-log-container::-webkit-scrollbar {
-                    width: 10px;
-                }
-
-                #ut-log-container::-webkit-scrollbar-track {
-                    background: #020305;
-                }
-
-                #ut-log-container::-webkit-scrollbar-thumb {
-                    background: linear-gradient(180deg, #66d1ff, #1b86ff);
-                    border-radius: 6px;
-                }
-
-                .log-message {
-                    margin-bottom: 14px;
+                    padding: 25px;
+                    font-size: 18px;
                     line-height: 1.6;
-                    word-wrap: break-word;
-                    padding: 10px 12px;
-                    border-radius: 8px;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(102, 209, 255, 0.25);
-                    box-shadow: 0 0 14px rgba(102, 209, 255, 0.08);
+                    background: #000000;
                 }
 
-                .log-message.from-player {
-                    color: #ffe57a;
-                    border-color: rgba(255, 207, 102, 0.5);
-                    box-shadow: 0 0 14px rgba(255, 207, 102, 0.12);
+                .asterisk { 
+                    margin-right: 15px; 
+                    vertical-align: top; 
                 }
-
-                .log-message img {
-                    max-width: 100%;
-                    height: auto;
+                
+                /* 공격 타이밍 화면 */
+                .attack-screen {
+                    width: 100%;
+                    height: 100%;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    background-color: #000000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10;
+                }
+                
+                .attack-screen.hidden {
+                    display: none;
+                }
+                
+                .attack-message {
+                    color: #FFFFFF;
+                    font-size: 18px;
+                    text-align: center;
+                }
+                
+                .dialogue-text {
                     display: block;
-                    margin: 10px 0;
-                    border-radius: 6px;
-                    border: 1px solid rgba(255, 255, 255, 0.15);
+                }
+                
+                .show-attack .dialogue-text {
+                    display: none;
+                }
+                
+                .show-attack .attack-screen {
+                    display: flex;
                 }
 
                 /* 중단: 전투 박스 */
                 #ut-middle-box {
-                    min-height: 240px;
+                    min-height: 150px;
                     width: 100%;
                     border: 4px solid #ffffff;
-                    border-radius: 12px;
-                    background:
-                        radial-gradient(circle at 50% 35%, rgba(103, 197, 255, 0.14), transparent 38%),
-                        radial-gradient(circle at 30% 60%, rgba(255, 255, 255, 0.12), transparent 38%),
-                        #000000;
+                    background: #000000;
                     position: relative;
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    box-shadow:
-                        0 0 0 3px rgba(102, 209, 255, 0.5),
-                        0 0 18px rgba(123, 224, 255, 0.35),
-                        inset 0 0 12px rgba(255, 255, 255, 0.08);
                     overflow: hidden;
                 }
 
-                #ut-middle-box::before,
-                #ut-middle-box::after {
-                    content: '';
-                    position: absolute;
-                    inset: 8px;
-                    border: 2px dashed rgba(255, 255, 255, 0.2);
-                    pointer-events: none;
-                }
-
-                #ut-middle-box::after {
-                    inset: 16px;
-                    border-style: solid;
-                    border-color: rgba(123, 224, 255, 0.35);
-                    filter: drop-shadow(0 0 12px rgba(123, 224, 255, 0.4));
-                }
-
                 .ut-heart-marker {
-                    position: absolute;
-                    bottom: 18px;
-                    right: 18px;
-                    font-size: 22px;
-                    color: #ff6b6b;
-                    opacity: 0.85;
-                    animation: heartFloat 3s ease-in-out infinite;
-                    pointer-events: none;
-                    text-shadow: 0 0 10px rgba(255, 107, 107, 0.6);
-                    z-index: 2;
-                }
-
-                @keyframes heartFloat {
-                    0% { transform: translateY(0); }
-                    50% { transform: translateY(-4px); }
-                    100% { transform: translateY(0); }
+                    display: none;
                 }
 
                 #ut-user-input {
                     width: 92%;
                     height: 82%;
-                    background: rgba(0, 0, 0, 0.72);
+                    background: rgba(0, 0, 0, 0.9);
                     border: 2px solid rgba(255, 255, 255, 0.35);
-                    color: #e9f5ff;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
-                    font-size: 18px;
+                    color: #FFFFFF;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 14px;
                     padding: 12px;
                     resize: none;
                     outline: none;
-                    box-shadow:
-                        inset 0 0 18px rgba(102, 209, 255, 0.15),
-                        0 0 0 2px rgba(123, 224, 255, 0.28);
-                    border-radius: 8px;
                     position: relative;
                     z-index: 1;
                 }
 
                 #ut-user-input::placeholder {
-                    color: #9fb4c8;
+                    color: #999999;
                 }
 
                 #ut-game-canvas {
@@ -348,44 +209,51 @@
 
                 /* 하단: 상태 및 커맨드 */
                 #ut-bottom-hud {
-                    padding: 12px 16px;
+                    padding: 0;
                     display: flex;
                     flex-direction: column;
-                    gap: 14px;
-                    border: 2px solid #66d1ff;
-                    border-radius: 10px;
-                    background: linear-gradient(90deg, rgba(102, 209, 255, 0.16), rgba(5, 7, 13, 0.92));
-                    box-shadow:
-                        0 0 0 2px rgba(13, 59, 92, 0.8),
-                        0 10px 22px rgba(0,0,0,0.35);
+                    gap: 18px;
                 }
 
                 .status-bar {
                     display: flex;
                     align-items: center;
-                    gap: 22px;
-                    font-size: 18px;
+                    gap: 30px;
+                    font-size: 20px;
+                    font-weight: bold;
+                    margin-bottom: 0;
+                    padding-left: 5px;
+                    box-sizing: border-box;
+                }
+                
+                .name {
+                    margin-right: 0;
                 }
 
                 .status-lv {
                     font-weight: bold;
-                    color: #b6e8ff;
+                    color: #FFFFFF;
                     letter-spacing: 1px;
                 }
 
                 .status-hp {
                     display: flex;
                     align-items: center;
-                    gap: 10px;
+                    gap: 12px;
+                }
+                
+                .hp-label {
+                    font-size: 14px;
+                    margin-top: 5px;
+                    margin-right: 0;
                 }
 
                 .hp-bar-container {
-                    width: 220px;
+                    width: 200px;
                     height: 20px;
-                    border: 2px solid #ffffff;
-                    background: #000000;
+                    border: none;
+                    background: #FF0000;
                     position: relative;
-                    box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.12);
                 }
 
                 .hp-bar-container.slim {
@@ -395,74 +263,84 @@
 
                 .hp-bar-fill {
                     height: 100%;
-                    background: linear-gradient(90deg, #f2e92b, #ffb347);
-                    box-shadow: 0 0 12px rgba(255, 231, 59, 0.65);
+                    background: #FFFF00;
                     transition: width 0.3s ease;
                 }
 
                 .hp-text {
-                    color: #fffbe7;
-                    text-shadow: 0 0 6px rgba(255, 231, 59, 0.65);
+                    color: #FFFFFF;
                 }
 
                 .status-kr {
-                    padding: 4px 10px;
-                    border: 2px solid #ffffff;
-                    border-radius: 6px;
-                    color: #fff;
-                    background: rgba(255, 255, 255, 0.05);
-                    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.08);
+                    display: none;
                 }
 
                 .status-kr.pill {
-                    padding: 6px 12px;
-                    background: rgba(123, 224, 255, 0.18);
-                    border-color: rgba(123, 224, 255, 0.8);
+                    display: none;
                 }
 
                 .command-buttons {
                     display: flex;
-                    gap: 28px;
-                    justify-content: center;
+                    gap: 10px;
+                    justify-content: space-between;
                 }
 
                 .cmd-btn {
-                    padding: 12px 22px;
-                    font-size: 18px;
+                    width: 110px;
+                    height: 38px;
+                    font-size: 14px;
                     cursor: pointer;
                     position: relative;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
-                    background: rgba(0, 0, 0, 0.6);
-                    border: 2px solid rgba(255, 255, 255, 0.45);
-                    color: #e7f7ff;
+                    font-family: 'Press Start 2P', cursive;
+                    background: #000000;
+                    border: 4px solid #FFFFFF;
+                    color: #FFFFFF;
                     letter-spacing: 1px;
-                    border-radius: 10px;
-                    transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
-                    box-shadow: 0 6px 14px rgba(0,0,0,0.35);
+                    transition: none;
+                    box-sizing: border-box;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
 
                 .cmd-btn:hover {
-                    transform: translateY(-2px);
-                    border-color: #66d1ff;
-                    box-shadow: 0 12px 20px rgba(0,0,0,0.4), 0 0 12px rgba(102, 209, 255, 0.35);
+                    border-color: #FFFF00;
+                    box-shadow: 0 0 8px #FFFF00;
+                }
+
+                /* Heart appears on hover */
+                .cmd-btn:hover::before {
+                    content: '';
+                    position: absolute;
+                    top: 8px;
+                    left: 6px;
+                    width: 20px;
+                    height: 20px;
+                    display: block;
+                    background: #FF0000;
+                    clip-path: polygon(50% 10%, 62% 2%, 75% 6%, 88% 20%, 88% 36%, 50% 80%, 12% 36%, 12% 20%, 25% 6%, 38% 2%);
+                }
+
+                @supports (clip-path: path('M16 28L2 12C-2 7 0 0 8 0c4 0 7 3 8 5 1-2 4-5 8-5 8 0 10 7 6 12z')) {
+                    .cmd-btn:hover::before {
+                        clip-path: path('M16 28L2 12C-2 7 0 0 8 0c4 0 7 3 8 5 1-2 4-5 8-5 8 0 10 7 6 12z');
+                    }
                 }
 
                 .cmd-btn.selected {
-                    color: #ffff8f;
-                    border-color: #ffff8f;
-                    box-shadow:
-                        0 12px 22px rgba(0,0,0,0.45),
-                        0 0 12px rgba(255, 235, 130, 0.45);
+                    color: #FFFF00;
+                    border-color: #FFFF00;
+                    box-shadow: 0 0 8px #FFFF00;
                 }
 
-                .cmd-btn.selected::before {
+                .cmd-btn.selected::after {
                     content: '❤';
                     position: absolute;
-                    left: -18px;
+                    left: -22px;
                     top: 50%;
                     transform: translateY(-50%);
-                    color: #ff6b6b;
-                    text-shadow: 0 0 10px rgba(255, 107, 107, 0.55);
+                    color: #FF0000;
+                    font-size: 16px;
                 }
 
                 /* 숨김 클래스 */
@@ -476,16 +354,11 @@
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    background: rgba(5, 7, 13, 0.98);
-                    border: 4px solid #66d1ff;
+                    background: #000000;
+                    border: 4px solid #FFFFFF;
                     padding: 20px;
                     z-index: ${Z_INDEX + 1};
                     min-width: 320px;
-                    border-radius: 12px;
-                    box-shadow:
-                        0 0 0 2px #0d3b5c,
-                        0 18px 28px rgba(0, 0, 0, 0.45),
-                        0 0 16px rgba(102, 209, 255, 0.35);
                     display: flex;
                     flex-direction: column;
                     gap: 12px;
@@ -499,28 +372,26 @@
                 .item-add input {
                     flex: 1;
                     padding: 10px;
-                    border-radius: 8px;
-                    border: 1px solid rgba(123, 224, 255, 0.5);
-                    background: rgba(255, 255, 255, 0.04);
-                    color: #e7f7ff;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
-                    font-size: 14px;
+                    border: 2px solid #FFFFFF;
+                    background: #000000;
+                    color: #FFFFFF;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 12px;
                 }
 
                 .item-add button {
                     padding: 10px 14px;
-                    border-radius: 8px;
-                    border: 2px solid #66d1ff;
-                    background: rgba(123, 224, 255, 0.15);
-                    color: #e7f7ff;
+                    border: 2px solid #FFFFFF;
+                    background: #000000;
+                    color: #FFFFFF;
                     cursor: pointer;
-                    font-family: 'DotGothic16', 'Courier New', monospace;
-                    transition: background 0.12s ease, transform 0.12s ease;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 12px;
                 }
 
                 .item-add button:hover {
-                    background: rgba(123, 224, 255, 0.28);
-                    transform: translateY(-1px);
+                    background: #FFFFFF;
+                    color: #000000;
                 }
 
                 .item-list {
@@ -532,67 +403,52 @@
                 .item-list li {
                     padding: 10px;
                     cursor: pointer;
-                    border-radius: 6px;
                     transition: background 0.15s ease;
                 }
 
                 .item-list li:hover {
-                    background: rgba(123, 224, 255, 0.08);
+                    background: rgba(255, 255, 255, 0.1);
                 }
 
                 .item-list li.selected {
-                    color: #ffff8f;
-                    background: rgba(255, 235, 130, 0.08);
-                    border: 1px solid rgba(255, 235, 130, 0.35);
+                    color: #FFFF00;
+                    background: rgba(255, 255, 0, 0.1);
+                    border: 1px solid #FFFF00;
                 }
 
                 .item-list li.selected::before {
                     content: '❤ ';
+                    color: #FF0000;
                 }
             </style>
 
             <div id="ut-frame">
-                <div class="ut-scanlines"></div>
-
-                <div id="ut-top-bar">
-                    <div class="ut-badge">C2 // SANS FIGHT SIM</div>
-                    <div class="ut-top-status">
-                        <span class="status-lv">LV ${state.lv}</span>
-                        <div class="status-hp">
-                            <span class="hp-label">HP</span>
-                            <div class="hp-bar-container slim">
-                                <div class="hp-bar-fill" style="width: 100%;"></div>
-                            </div>
-                            <span class="hp-text">${state.hp} / ${state.maxHp}</span>
-                        </div>
-                        <span class="status-kr pill">KR</span>
+                <div class="dialogue-container" id="dialogueBox">
+                    <div class="dialogue-text">
+                        <span class="asterisk">*</span>마우스를 올리면<br>
+                        <span class="asterisk">*</span>하트가 나타납니다.
                     </div>
-                </div>
-
-                <div id="ut-log-card">
-                    <div class="panel-heading">DIALOG FEED // BATTLE CHANNEL</div>
-                    <div id="ut-log-container">
-                        <div class="log-message">대화 내용이 여기에 표시됩니다...</div>
+                    <div class="attack-screen hidden">
+                        <div class="attack-message"></div>
                     </div>
                 </div>
 
                 <div id="ut-middle-box">
-                    <div class="ut-heart-marker">❤</div>
                     <textarea id="ut-user-input" placeholder="행동이나 대사를 입력하세요..."></textarea>
                     <canvas id="ut-game-canvas" class="hidden"></canvas>
                 </div>
 
                 <div id="ut-bottom-hud">
                     <div class="status-bar">
+                        <span class="name">CHARA</span>
                         <span class="status-lv">LV ${state.lv}</span>
                         <div class="status-hp">
-                            <span>HP</span>
+                            <span class="hp-label">HP</span>
                             <div class="hp-bar-container">
                                 <div class="hp-bar-fill" style="width: 100%;"></div>
                             </div>
                             <span class="hp-text">${state.hp} / ${state.maxHp}</span>
                         </div>
-                        <span class="status-kr">KR</span>
                     </div>
                     <div class="command-buttons">
                         <button class="cmd-btn selected" data-index="0">FIGHT</button>
@@ -832,27 +688,37 @@
         ctx.fillStyle = '#000000';
         ctx.fillRect(0, 0, width, height);
         
-        // 눈 모양 타원 (중앙)
+        // 타겟 바 (눈 모양, 둥근 타원)
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const barWidth = width * 0.85;
+        const barHeight = height * 0.6;
+        
+        // 흰색 테두리 타원
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.ellipse(width / 2, height / 2, width * 0.35, height * 0.25, 0, 0, Math.PI * 2);
+        ctx.ellipse(centerX, centerY, barWidth / 2, barHeight / 2, 0, 0, Math.PI * 2);
         ctx.stroke();
         
-        // 중앙선 (타겟)
-        ctx.strokeStyle = '#ff0000';
-        ctx.lineWidth = 2;
+        // 중앙 타겟 라인 (빨간색)
+        ctx.strokeStyle = '#FF0000';
+        ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(width / 2 - 5, height / 2 - height * 0.25);
-        ctx.lineTo(width / 2 - 5, height / 2 + height * 0.25);
-        ctx.moveTo(width / 2 + 5, height / 2 - height * 0.25);
-        ctx.lineTo(width / 2 + 5, height / 2 + height * 0.25);
+        ctx.moveTo(centerX, centerY - barHeight / 2);
+        ctx.lineTo(centerX, centerY + barHeight / 2);
         ctx.stroke();
         
-        // 움직이는 흰색 막대
-        const barX = (width * 0.15) + (state.barPosition * width * 0.7);
+        // 움직이는 흰색 커서
+        const minX = centerX - barWidth / 2 + 30;
+        const maxX = centerX + barWidth / 2 - 30;
+        const cursorX = minX + (state.barPosition * (maxX - minX));
+        
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(barX - 3, height / 2 - height * 0.25, 6, height * 0.5);
+        ctx.shadowColor = '#ffffff';
+        ctx.shadowBlur = 8;
+        ctx.fillRect(cursorX - 5, centerY - barHeight / 2, 10, barHeight);
+        ctx.shadowBlur = 0;
     }
 
     function calculateJudgment(position) {
