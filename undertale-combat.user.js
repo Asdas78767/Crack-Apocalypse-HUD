@@ -223,13 +223,13 @@
                     position: absolute;
                     top: 100%;
                     transform: translateY(-50%);
-                    left: 3%;
+                    left: 0;
                     animation: moveCursor 1.5s linear infinite alternate;
                 }
                 
                 @keyframes moveCursor {
-                    0% { left: 3%; }
-                    100% { left: 94%; }
+                    0% { transform: translateX(3%) translateY(-50%); }
+                    100% { transform: translateX(calc(95% - 100px)) translateY(-50%); }
                 }
                 
                 .attack-message {
