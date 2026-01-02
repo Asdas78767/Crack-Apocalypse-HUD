@@ -74,13 +74,33 @@
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
                 
+                /* 토글 버튼 */
+                .ut-toggle-btn {
+                    position: fixed;
+                    top: 16px;
+                    right: 16px;
+                    background: #000000;
+                    color: #FFFFFF;
+                    border: 2px solid #FFFFFF;
+                    padding: 8px 12px;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 12px;
+                    cursor: pointer;
+                    z-index: ${Z_INDEX + 1};
+                    user-select: none;
+                }
+
+                .ut-toggle-btn:hover {
+                    border-color: #FFFF00;
+                    color: #FFFF00;
+                }
+                
                 #ut-overlay-root {
                     position: fixed;
                     inset: 0;
-                    padding: 26px;
                     width: 100vw;
                     height: 100vh;
-                    background: #000000;
+                    background: rgba(0, 0, 0, 0.9);
                     color: #FFFFFF;
                     font-family: 'Press Start 2P', cursive;
                     font-size: 16px;
@@ -93,14 +113,26 @@
                     image-rendering: pixelated;
                     -webkit-font-smoothing: none;
                 }
+                
+                #ut-overlay-root.hidden {
+                    display: none;
+                }
 
                 #ut-overlay-root * {
                     box-sizing: border-box;
                 }
 
+                /* 팝업 컨테이너 */
+                .popup {
+                    background: rgba(0, 0, 0, 0.95);
+                    border: 4px solid #FFFFFF;
+                    padding: 20px 22px 26px;
+                    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+                }
+
                 #ut-frame {
                     position: relative;
-                    width: min(600px, 90%);
+                    width: 600px;
                     display: flex;
                     flex-direction: column;
                     gap: 15px;
@@ -121,6 +153,30 @@
                     font-size: 18px;
                     line-height: 1.6;
                     background: #000000;
+                    overflow-y: auto;
+                    overflow-x: hidden;
+                }
+                
+                .dialogue-container::-webkit-scrollbar {
+                    width: 8px;
+                }
+                
+                .dialogue-container::-webkit-scrollbar-track {
+                    background: #000000;
+                }
+                
+                .dialogue-container::-webkit-scrollbar-thumb {
+                    background: #FFFFFF;
+                }
+                
+                .log-message {
+                    margin-bottom: 10px;
+                    line-height: 1.6;
+                    word-wrap: break-word;
+                }
+                
+                .log-message.from-player {
+                    color: #FFFF00;
                 }
 
                 .asterisk { 
@@ -144,6 +200,36 @@
                 
                 .attack-screen.hidden {
                     display: none;
+                }
+                
+                /* 타겟 바 (눈 모양 이미지) */
+                .target-bar {
+                    background-image: url('https://i.ibb.co/GkBrsc/image.png');
+                    width: 95%;
+                    height: 120px;
+                    background-size: contain;
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    position: relative;
+                }
+                
+                /* 움직이는 커서 (이미지) */
+                .attack-cursor {
+                    background-image: url('https://i.ibb.co/wM7gzg/image.png');
+                    width: 100px;
+                    height: 250px;
+                    background-size: 100% 100%;
+                    background-repeat: no-repeat;
+                    position: absolute;
+                    top: 100%;
+                    transform: translateY(-50%);
+                    left: 3%;
+                    animation: moveCursor 1.5s linear infinite alternate;
+                }
+                
+                @keyframes moveCursor {
+                    0% { left: 3%; }
+                    100% { left: 94%; }
                 }
                 
                 .attack-message {
@@ -293,44 +379,51 @@
                     position: relative;
                     font-family: 'Press Start 2P', cursive;
                     background: #000000;
-                    border: 4px solid #FFFFFF;
-                    color: #FFFFFF;
+                    color: transparent;
                     letter-spacing: 1px;
                     transition: none;
                     box-sizing: border-box;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                    border: none;
+                    background-repeat: no-repeat;
+                    background-size: 100% auto;
+                    background-position: 0 0;
+                }
+                
+                /* 버튼별 이미지 매핑 */
+                .cmd-btn[data-index="0"] { 
+                    background-image: url('https://i.ibb.co/GnTODZ/image.png');
+                }
+                .cmd-btn[data-index="1"] { 
+                    background-image: url('https://i.ibb.co/q15wco/image.png');
+                }
+                .cmd-btn[data-index="2"] { 
+                    background-image: url('https://i.ibb.co/v5qNts/image.png');
+                }
+                .cmd-btn[data-index="3"] { 
+                    background-image: url('https://i.ibb.co/FwOLMJ/image.png');
                 }
 
                 .cmd-btn:hover {
-                    border-color: #FFFF00;
-                    box-shadow: 0 0 8px #FFFF00;
+                    background-position: 0 53%;
                 }
 
                 /* Heart appears on hover */
                 .cmd-btn:hover::before {
                     content: '';
                     position: absolute;
-                    top: 8px;
-                    left: 6px;
+                    top: 10px;
+                    left: 4px;
                     width: 20px;
                     height: 20px;
                     display: block;
-                    background: #FF0000;
-                    clip-path: polygon(50% 10%, 62% 2%, 75% 6%, 88% 20%, 88% 36%, 50% 80%, 12% 36%, 12% 20%, 25% 6%, 38% 2%);
-                }
-
-                @supports (clip-path: path('M16 28L2 12C-2 7 0 0 8 0c4 0 7 3 8 5 1-2 4-5 8-5 8 0 10 7 6 12z')) {
-                    .cmd-btn:hover::before {
-                        clip-path: path('M16 28L2 12C-2 7 0 0 8 0c4 0 7 3 8 5 1-2 4-5 8-5 8 0 10 7 6 12z');
-                    }
-                }
-
-                .cmd-btn.selected {
-                    color: #FFFF00;
-                    border-color: #FFFF00;
-                    box-shadow: 0 0 8px #FFFF00;
+                    background-color: #000000;
+                    background-image: url('https://i.ibb.co/pF8sGP/image.png');
+                    background-repeat: no-repeat;
+                    background-position: center;
+                    background-size: contain;
                 }
 
                 .cmd-btn.selected::after {
@@ -422,59 +515,84 @@
                 }
             </style>
 
-            <div id="ut-frame">
-                <div class="dialogue-container" id="dialogueBox">
-                    <div class="dialogue-text">
-                        <span class="asterisk">*</span>마우스를 올리면<br>
-                        <span class="asterisk">*</span>하트가 나타납니다.
-                    </div>
-                    <div class="attack-screen hidden">
-                        <div class="attack-message"></div>
-                    </div>
-                </div>
-
-                <div id="ut-middle-box">
-                    <textarea id="ut-user-input" placeholder="행동이나 대사를 입력하세요..."></textarea>
-                    <canvas id="ut-game-canvas" class="hidden"></canvas>
-                </div>
-
-                <div id="ut-bottom-hud">
-                    <div class="status-bar">
-                        <span class="name">CHARA</span>
-                        <span class="status-lv">LV ${state.lv}</span>
-                        <div class="status-hp">
-                            <span class="hp-label">HP</span>
-                            <div class="hp-bar-container">
-                                <div class="hp-bar-fill" style="width: 100%;"></div>
+            <div id="ut-overlay-root">
+                <div class="popup">
+                    <div id="ut-frame">
+                        <div class="dialogue-container" id="dialogueBox">
+                            <div class="dialogue-text" id="ut-log-container">
+                                <div class="log-message">
+                                    <span class="asterisk">*</span>대화 내용이 여기에 표시됩니다...
+                                </div>
                             </div>
-                            <span class="hp-text">${state.hp} / ${state.maxHp}</span>
+                            <div class="attack-screen hidden">
+                                <div class="target-bar">
+                                    <div class="attack-cursor"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="ut-middle-box">
+                            <textarea id="ut-user-input" placeholder="행동이나 대사를 입력하세요..."></textarea>
+                            <canvas id="ut-game-canvas" class="hidden"></canvas>
+                        </div>
+
+                        <div id="ut-bottom-hud">
+                            <div class="status-bar">
+                                <span class="name">CHARA</span>
+                                <span class="status-lv">LV ${state.lv}</span>
+                                <div class="status-hp">
+                                    <span class="hp-label">HP</span>
+                                    <div class="hp-bar-container">
+                                        <div class="hp-bar-fill" style="width: 100%;"></div>
+                                    </div>
+                                    <span class="hp-text">${state.hp} / ${state.maxHp}</span>
+                                </div>
+                            </div>
+                            <div class="command-buttons">
+                                <button class="cmd-btn selected" data-index="0"></button>
+                                <button class="cmd-btn" data-index="1"></button>
+                                <button class="cmd-btn" data-index="2"></button>
+                                <button class="cmd-btn" data-index="3"></button>
+                            </div>
+                        </div>
+
+                        <div id="ut-item-popup" class="hidden">
+                            <div class="item-add">
+                                <input id="ut-item-input" type="text" placeholder="예: 수퍼 포션 - HP 40 회복">
+                                <button id="ut-item-add-btn">추가</button>
+                            </div>
+                            <ul class="item-list"></ul>
                         </div>
                     </div>
-                    <div class="command-buttons">
-                        <button class="cmd-btn selected" data-index="0">FIGHT</button>
-                        <button class="cmd-btn" data-index="1">ACT</button>
-                        <button class="cmd-btn" data-index="2">ITEM</button>
-                        <button class="cmd-btn" data-index="3">MERCY</button>
-                    </div>
-                </div>
-
-                <div id="ut-item-popup" class="hidden">
-                    <div class="item-add">
-                        <input id="ut-item-input" type="text" placeholder="예: 수퍼 포션 - HP 40 회복">
-                        <button id="ut-item-add-btn">추가</button>
-                    </div>
-                    <ul class="item-list"></ul>
                 </div>
             </div>
         `;
 
         document.body.appendChild(overlay);
+        
+        // 토글 버튼을 별도로 생성 (overlay와 독립적)
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'ut-toggle-btn';
+        toggleBtn.id = 'ut-toggle';
+        toggleBtn.textContent = 'UI 숨기기';
+        document.body.appendChild(toggleBtn);
+        
         initializeEventListeners();
         startChatObserver();
     }
 
     // ==================== 이벤트 리스너 ====================
     function initializeEventListeners() {
+        // 토글 버튼 이벤트
+        const toggleBtn = document.getElementById('ut-toggle');
+        const overlayRoot = document.getElementById('ut-overlay-root');
+        if (toggleBtn && overlayRoot) {
+            toggleBtn.addEventListener('click', () => {
+                const isHidden = overlayRoot.classList.toggle('hidden');
+                toggleBtn.textContent = isHidden ? 'UI 표시' : 'UI 숨기기';
+            });
+        }
+
         // 키보드 이벤트
         document.addEventListener('keydown', handleKeydown, true);
 
@@ -603,65 +721,56 @@
 
     function switchToFightMode() {
         state.currentMode = MODE.FIGHT;
-        const userInput = document.getElementById('ut-user-input');
-        const canvas = document.getElementById('ut-game-canvas');
+        const dialogueBox = document.getElementById('dialogueBox');
+        const attackScreen = dialogueBox.querySelector('.attack-screen');
         
-        userInput.classList.add('hidden');
-        canvas.classList.remove('hidden');
+        // 대화창에서 attack screen 표시 (이미지 기반)
+        dialogueBox.classList.add('show-attack');
+        if (attackScreen) {
+            attackScreen.classList.remove('hidden');
+        }
         
-        startMinigame();
+        startImageMinigame();
     }
 
     function switchToInputMode() {
         state.currentMode = MODE.INPUT;
-        const userInput = document.getElementById('ut-user-input');
-        const canvas = document.getElementById('ut-game-canvas');
+        const dialogueBox = document.getElementById('dialogueBox');
+        const attackScreen = dialogueBox.querySelector('.attack-screen');
         
-        userInput.classList.remove('hidden');
-        canvas.classList.add('hidden');
+        // 대화창으로 복귀
+        dialogueBox.classList.remove('show-attack');
+        if (attackScreen) {
+            attackScreen.classList.add('hidden');
+        }
         
         state.gameActive = false;
     }
 
-    function startMinigame() {
+    function startImageMinigame() {
         state.gameActive = true;
         state.barPosition = 0;
         state.barDirection = 1;
         
-        const canvas = document.getElementById('ut-game-canvas');
-        const ctx = canvas.getContext('2d');
+        // CSS 애니메이션을 사용하므로 별도의 게임 루프가 필요 없음
+        // 커서는 이미 CSS animation으로 움직이고 있음
         
-        // 캔버스 크기 설정
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
-        
-        // 게임 루프
-        function gameLoop() {
-            if (!state.gameActive) return;
-            
-            // 막대 이동
-            state.barPosition += state.barSpeed * state.barDirection;
-            
-            // 경계 반전
-            if (state.barPosition >= 1 || state.barPosition <= 0) {
-                state.barDirection *= -1;
-            }
-            
-            // 화면 그리기
-            drawMinigame(ctx, canvas);
-            
-            requestAnimationFrame(gameLoop);
-        }
-        
-        gameLoop();
-        
-        // Enter 키로 정지
+        // Enter 키로 정지하고 판정
         const stopHandler = (e) => {
             if (KEYS.CONFIRM.includes(e.key) && state.gameActive) {
                 e.preventDefault();
                 e.stopPropagation();
                 state.gameActive = false;
                 document.removeEventListener('keydown', stopHandler, true);
+                
+                // 커서 위치를 CSS animation에서 계산
+                const cursor = document.querySelector('.attack-cursor');
+                if (cursor) {
+                    const rect = cursor.getBoundingClientRect();
+                    const container = cursor.parentElement.getBoundingClientRect();
+                    const relativePos = (rect.left - container.left) / container.width;
+                    state.barPosition = Math.max(0, Math.min(1, relativePos));
+                }
                 
                 // 판정 계산
                 const judgment = calculateJudgment(state.barPosition);
@@ -678,47 +787,6 @@
         };
         
         document.addEventListener('keydown', stopHandler, true);
-    }
-
-    function drawMinigame(ctx, canvas) {
-        const width = canvas.width;
-        const height = canvas.height;
-        
-        // 배경
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, width, height);
-        
-        // 타겟 바 (눈 모양, 둥근 타원)
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const barWidth = width * 0.85;
-        const barHeight = height * 0.6;
-        
-        // 흰색 테두리 타원
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.ellipse(centerX, centerY, barWidth / 2, barHeight / 2, 0, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // 중앙 타겟 라인 (빨간색)
-        ctx.strokeStyle = '#FF0000';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.moveTo(centerX, centerY - barHeight / 2);
-        ctx.lineTo(centerX, centerY + barHeight / 2);
-        ctx.stroke();
-        
-        // 움직이는 흰색 커서
-        const minX = centerX - barWidth / 2 + 30;
-        const maxX = centerX + barWidth / 2 - 30;
-        const cursorX = minX + (state.barPosition * (maxX - minX));
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.shadowColor = '#ffffff';
-        ctx.shadowBlur = 8;
-        ctx.fillRect(cursorX - 5, centerY - barHeight / 2, 10, barHeight);
-        ctx.shadowBlur = 0;
     }
 
     function calculateJudgment(position) {
