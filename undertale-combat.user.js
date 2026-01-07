@@ -1,528 +1,316 @@
 // ==UserScript==
 // @name         Undertale Style AI Chat Combat Overlay
 // @namespace    https://github.com/Asdas78767/Crack-Apocalypse-HUD
-// @version      1.0.0
-// @description  언더테일 스타일의 동적 전투 인터페이스로 AI 채팅을 변환
-// @author       Asdas78767
+// @version      1.6.8
+// @description  언더테일 스타일 전투 UI (외부 이미지, CSS 막대 커서, hover 하트, 선택 외곽선 없음, LV/HP 조절 저장, BGM 반복, 아이템 취소, WASD 이동 제거, 기본 LV20 HP99/99, CHARA 흰색, 컴팩트 UI, UI 숨김 시 키패스)
+// @autor        Asdas78767
 // @match        https://crack.wrtn.ai/*
 // @grant        none
 // @run-at       document-end
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
-    // ==================== 상수 정의 ====================
     const OVERLAY_ID = 'ut-overlay-root';
+    const WINDOW_ID = 'ut-window';
     const Z_INDEX = 9999;
-    
-    // 키보드 매핑
+    const BGM_IFRAME_ID = 'ut-bgm-iframe';
+    const STORAGE_KEY = 'ut-overlay-settings-v1';
+    const STORAGE_BGM_KEY = 'ut-overlay-bgm-v1';
+
+    const ASSET = {
+        targetBar: 'https://i.ifh.cc/GkBrsc.png',
+        heart:     'https://i.ifh.cc/pF8sGP.png',
+        fight:     'https://i.ifh.cc/GnTODZ.png',
+        act:       'https://i.ifh.cc/q15wco.png',
+        item:      'https://i.ifh.cc/v5qNts.png',
+        mercy:     'https://i.ifh.cc/FwOLMJ.png'
+    };
+
+    // 화살표만 사용 (WASD 제거)
     const KEYS = {
-        UP: ['ArrowUp', 'w', 'W'],
-        DOWN: ['ArrowDown', 's', 'S'],
-        LEFT: ['ArrowLeft', 'a', 'A'],
-        RIGHT: ['ArrowRight', 'd', 'D'],
+        UP: ['ArrowUp'],
+        DOWN: ['ArrowDown'],
+        LEFT: ['ArrowLeft'],
+        RIGHT: ['ArrowRight'],
         CONFIRM: ['Enter', 'z', 'Z'],
         CANCEL: ['Shift', 'x', 'X']
     };
 
-    // 모드
-    const MODE = {
-        INPUT: 'input',
-        FIGHT: 'fight'
-    };
-
-    // 커맨드 버튼
+    const MODE = { INPUT: 'input', FIGHT: 'fight' };
     const COMMANDS = ['FIGHT', 'ACT', 'ITEM', 'MERCY'];
 
-    // 판정 기준 (중앙으로부터의 거리 비율)
     const JUDGMENT = {
         PERFECT: { max: 0.05, text: '...효과는 치명적이었다!' },
-        GREAT: { max: 0.20, text: '...효과는 굉장했다!' },
-        GOOD: { max: 0.50, text: '...효과는 평범했다.' },
-        BAD: { max: 0.80, text: '...효과는 미미했다...' },
-        MISS: { max: 1.00, text: '...그러나 공격은 빗나갔다!' }
+        GREAT:   { max: 0.20, text: '...효과는 굉장했다!' },
+        GOOD:    { max: 0.50, text: '...효과는 평범했다.' },
+        BAD:     { max: 0.80, text: '...효과는 미미했다...' },
+        MISS:    { max: 1.00, text: '...그러나 공격은 빗나갔다!' }
     };
 
-    // ==================== 상태 관리 ====================
     const state = {
         currentMode: MODE.INPUT,
         selectedCommand: 0,
         userInput: '',
-        hp: 20,
-        maxHp: 20,
-        lv: 1,
+        hp: 99,
+        maxHp: 99,
+        lv: 20,
+        stats: {
+            atkBase: 38,
+            defBase: 4,
+            atkEquip: 99,
+            defEquip: 99,
+            weapon: '진짜 칼',
+            armor: '로켓'
+        },
         chatHistory: [],
         gameActive: false,
-        barPosition: 0,
-        barDirection: 1,
-        barSpeed: 0.03,
-        items: [
-            { name: '포션', desc: 'HP 20 회복' },
-            { name: '엘릭서', desc: 'HP 전체 회복' },
-            { name: '붕대', desc: 'HP 10 회복' }
-        ]
+        items: [],
+        lastBgm: null
     };
 
-    // ==================== DOM 생성 ====================
+    let observer = null;
+
+    function cssForImages() {
+        const use = (url) => `url('${url}')`;
+        return `
+            .target-bar {
+                position: relative;
+                width: 95%;
+                height: 110px;
+                border: 3px solid #fff;
+                background: #000;
+                overflow: hidden;
+                background-image: ${use(ASSET.targetBar)};
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-position: center;
+            }
+            .target-bar::after {
+                content: '';
+                position: absolute;
+                top: 0; bottom: 0;
+                left: 45%; width: 10%;
+                background: rgba(255, 255, 0, 0.15);
+                border-left: 2px solid #ffff00;
+                border-right: 2px solid #ffff00;
+            }
+            .attack-cursor {
+                position: absolute;
+                top: -8px;
+                width: 8px;
+                height: 130px;
+                background: #ff3b3b;
+                box-shadow: 0 0 8px #ff3b3b;
+                left: 3%;
+                animation: moveCursor 1.5s linear infinite alternate;
+            }
+            @keyframes moveCursor { 0% { left: 3%; } 100% { left: 93%; } }
+
+            .cmd-btn { background-size: 100% auto; background-repeat: no-repeat; }
+            .cmd-btn[data-index="0"] { background-image: ${use(ASSET.fight)}; }
+            .cmd-btn[data-index="1"] { background-image: ${use(ASSET.act)}; }
+            .cmd-btn[data-index="2"] { background-image: ${use(ASSET.item)}; }
+            .cmd-btn[data-index="3"] { background-image: ${use(ASSET.mercy)}; }
+            .cmd-btn:hover { background-position: 0 53%; }
+            .cmd-btn:hover::before {
+                content: '';
+                position: absolute;
+                top: 8px; left: 6px;
+                width: 20px; height: 20px;
+                background: #000;
+                background-image: ${use(ASSET.heart)};
+                background-size: contain;
+                background-repeat: no-repeat;
+            }
+        `;
+    }
+
     function createOverlay() {
         if (document.getElementById(OVERLAY_ID)) return;
-
         const overlay = document.createElement('div');
         overlay.id = OVERLAY_ID;
         overlay.innerHTML = `
             <style>
                 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-                
-                /* 토글 버튼 */
+                :root { --yellow: #ffff00; --red: #ff0000; }
+
+                #${OVERLAY_ID} { position: fixed; inset: 0; pointer-events: none; z-index: ${Z_INDEX}; }
+                #${WINDOW_ID} {
+                    position: fixed;
+                    width: 620px;
+                    background: rgba(0,0,0,0.95);
+                    border: 3px solid #fff;
+                    box-shadow: 0 10px 24px rgba(0,0,0,0.55);
+                    pointer-events: auto;
+                    user-select: none;
+                }
+                .ut-drag-handle {
+                    display: flex; align-items: center; justify-content: space-between;
+                    background: #000; color: #fff; border-bottom: 3px solid #fff;
+                    padding: 8px 12px; font-family: 'Press Start 2P', cursive; font-size: 11px;
+                    cursor: move;
+                }
+                .ut-drag-title { letter-spacing: 1px; }
+                .ut-controls { display: flex; align-items: center; gap: 8px; }
+                .ut-gear-btn {
+                    background: #000; color: #fff; border: 2px solid #fff;
+                    padding: 3px 7px; font-family: 'Press Start 2P', cursive; font-size: 10px;
+                    cursor: pointer; user-select: none;
+                }
+                .ut-gear-btn:hover { border-color: var(--yellow); color: var(--yellow); }
                 .ut-toggle-btn {
-                    position: fixed;
-                    top: 16px;
-                    right: 16px;
-                    background: #000000;
-                    color: #FFFFFF;
-                    border: 2px solid #FFFFFF;
-                    padding: 8px 12px;
-                    font-family: 'Press Start 2P', cursive;
-                    font-size: 12px;
-                    cursor: pointer;
-                    z-index: ${Z_INDEX + 1};
-                    user-select: none;
+                    position: fixed; top: 12px; right: 12px;
+                    background: #000; color: #fff; border: 2px solid #fff;
+                    padding: 6px 10px; font-family: 'Press Start 2P', cursive; font-size: 11px;
+                    cursor: pointer; z-index: ${Z_INDEX + 1}; user-select: none; pointer-events: auto;
                 }
+                .ut-toggle-btn:hover { border-color: var(--yellow); color: var(--yellow); }
 
-                .ut-toggle-btn:hover {
-                    border-color: #FFFF00;
-                    color: #FFFF00;
-                }
-                
-                #ut-overlay-root {
-                    position: fixed;
-                    inset: 0;
-                    width: 100vw;
-                    height: 100vh;
-                    background: rgba(0, 0, 0, 0.9);
-                    color: #FFFFFF;
-                    font-family: 'Press Start 2P', cursive;
-                    font-size: 16px;
-                    z-index: ${Z_INDEX};
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    overflow: hidden;
-                    user-select: none;
-                    image-rendering: pixelated;
-                    -webkit-font-smoothing: none;
-                }
-                
-                #ut-overlay-root.hidden {
-                    display: none;
-                }
-
-                #ut-overlay-root * {
-                    box-sizing: border-box;
-                }
-
-                /* 팝업 컨테이너 */
-                .popup {
-                    background: rgba(0, 0, 0, 0.95);
-                    border: 4px solid #FFFFFF;
-                    padding: 20px 22px 26px;
-                    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
-                }
-
-                #ut-frame {
-                    position: relative;
-                    width: 600px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 15px;
-                    padding: 0;
-                    background: transparent;
-                    overflow: visible;
-                }
-
-                /* 대화창 */
+                #ut-frame { position: relative; width: 100%; display: flex; flex-direction: column; gap: 12px; padding: 12px 14px 16px; box-sizing: border-box; }
                 .dialogue-container {
-                    width: 100%;
-                    height: 150px;
-                    border: 4px solid #FFFFFF;
-                    box-sizing: border-box;
-                    margin-bottom: 15px;
-                    position: relative;
-                    padding: 25px;
-                    font-size: 18px;
-                    line-height: 1.6;
-                    background: #000000;
-                    overflow-y: auto;
-                    overflow-x: hidden;
+                    width: 100%; height: 130px; border: 3px solid #fff;
+                    margin-bottom: 10px; position: relative; padding: 20px;
+                    font-size: 17px; line-height: 1.5; background: #000;
+                    overflow-y: auto; overflow-x: hidden;
                 }
-                
-                .dialogue-container::-webkit-scrollbar {
-                    width: 8px;
-                }
-                
-                .dialogue-container::-webkit-scrollbar-track {
-                    background: #000000;
-                }
-                
-                .dialogue-container::-webkit-scrollbar-thumb {
-                    background: #FFFFFF;
-                }
-                
-                .log-message {
-                    margin-bottom: 10px;
-                    line-height: 1.6;
-                    word-wrap: break-word;
-                }
-                
-                .log-message.from-player {
-                    color: #FFFF00;
-                }
+                .dialogue-container::-webkit-scrollbar { width: 7px; }
+                .dialogue-container::-webkit-scrollbar-track { background: #000; }
+                .dialogue-container::-webkit-scrollbar-thumb { background: #fff; }
+                .log-message { margin-bottom: 8px; line-height: 1.5; word-wrap: break-word; }
+                .log-message.from-player { color: var(--yellow); }
+                .asterisk { margin-right: 12px; vertical-align: top; }
 
-                .asterisk { 
-                    margin-right: 15px; 
-                    vertical-align: top; 
-                }
-                
-                /* 공격 타이밍 화면 */
-                .attack-screen {
-                    width: 100%;
-                    height: 100%;
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    background-color: #000000;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 10;
-                }
-                
-                .attack-screen.hidden {
-                    display: none;
-                }
-                
-                /* 타겟 바 (눈 모양 이미지) */
-                .target-bar {
-                    background-image: url('https://i.ibb.co/GkBrsc/image.png');
-                    width: 95%;
-                    height: 120px;
-                    background-size: contain;
-                    background-repeat: no-repeat;
-                    background-position: center;
-                    position: relative;
-                }
-                
-                /* 움직이는 커서 (이미지) */
-                .attack-cursor {
-                    background-image: url('https://i.ibb.co/wM7gzg/image.png');
-                    width: 100px;
-                    height: 250px;
-                    background-size: 100% 100%;
-                    background-repeat: no-repeat;
-                    position: absolute;
-                    top: 100%;
-                    transform: translateY(-50%);
-                    left: 0;
-                    animation: moveCursor 1.5s linear infinite alternate;
-                }
-                
-                @keyframes moveCursor {
-                    0% { transform: translateX(3%) translateY(-50%); }
-                    100% { transform: translateX(calc(95% - 100px)) translateY(-50%); }
-                }
-                
-                .attack-message {
-                    color: #FFFFFF;
-                    font-size: 18px;
-                    text-align: center;
-                }
-                
-                .dialogue-text {
-                    display: block;
-                }
-                
-                .show-attack .dialogue-text {
-                    display: none;
-                }
-                
-                .show-attack .attack-screen {
-                    display: flex;
-                }
+                .attack-screen { width: 100%; height: 100%; position: absolute; top:0; left:0; background: #000; display: none; align-items: center; justify-content: center; z-index: 10; }
+                .attack-screen.hidden { display: none; }
+                .show-attack .dialogue-text { display: none; }
+                .show-attack .attack-screen { display: flex; }
 
-                /* 중단: 전투 박스 */
                 #ut-middle-box {
-                    min-height: 150px;
-                    width: 100%;
-                    border: 4px solid #ffffff;
-                    background: #000000;
-                    position: relative;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    overflow: hidden;
+                    min-height: 130px; width: 100%; border: 3px solid #fff; background: #000;
+                    position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden;
                 }
-
-                .ut-heart-marker {
-                    display: none;
-                }
-
                 #ut-user-input {
-                    width: 92%;
-                    height: 82%;
-                    background: rgba(0, 0, 0, 0.9);
-                    border: 2px solid rgba(255, 255, 255, 0.35);
-                    color: #FFFFFF;
-                    font-family: 'Press Start 2P', cursive;
-                    font-size: 14px;
-                    padding: 12px;
-                    resize: none;
-                    outline: none;
-                    position: relative;
-                    z-index: 1;
+                    width: 92%; height: 80%; background: rgba(0,0,0,0.9);
+                    border: 2px solid rgba(255,255,255,0.35); color: #fff;
+                    font-family: 'Press Start 2P', cursive; font-size: 13px;
+                    padding: 10px; resize: none; outline: none; z-index: 1;
                 }
+                #ut-user-input::placeholder { color: #999; }
 
-                #ut-user-input::placeholder {
-                    color: #999999;
-                }
+                #ut-bottom-hud { display: flex; flex-direction: column; gap: 14px; }
+                .status-bar { display: flex; align-items: center; gap: 24px; font-size: 18px; font-weight: bold; padding-left: 4px; }
+                .name { margin-right: 0; color: #fff; }
+                .status-lv { color: #fff; letter-spacing: 1px; }
+                .status-hp { display: flex; align-items: center; gap: 10px; }
+                .hp-label { font-size: 13px; margin-top: 4px; }
+                .hp-bar-container { width: 180px; height: 18px; background: var(--red); position: relative; }
+                .hp-bar-fill { height: 100%; background: var(--yellow); transition: width 0.3s ease; }
+                .hp-text { color: #fff; }
 
-                #ut-game-canvas {
-                    width: 96%;
-                    height: 86%;
-                    background: transparent;
-                    z-index: 1;
-                }
-
-                /* 하단: 상태 및 커맨드 */
-                #ut-bottom-hud {
-                    padding: 0;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 18px;
-                }
-
-                .status-bar {
-                    display: flex;
-                    align-items: center;
-                    gap: 30px;
-                    font-size: 20px;
-                    font-weight: bold;
-                    margin-bottom: 0;
-                    padding-left: 5px;
-                    box-sizing: border-box;
-                }
-                
-                .name {
-                    margin-right: 0;
-                }
-
-                .status-lv {
-                    font-weight: bold;
-                    color: #FFFFFF;
-                    letter-spacing: 1px;
-                }
-
-                .status-hp {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                }
-                
-                .hp-label {
-                    font-size: 14px;
-                    margin-top: 5px;
-                    margin-right: 0;
-                }
-
-                .hp-bar-container {
-                    width: 200px;
-                    height: 20px;
-                    border: none;
-                    background: #FF0000;
-                    position: relative;
-                }
-
-                .hp-bar-container.slim {
-                    width: 200px;
-                    height: 16px;
-                }
-
-                .hp-bar-fill {
-                    height: 100%;
-                    background: #FFFF00;
-                    transition: width 0.3s ease;
-                }
-
-                .hp-text {
-                    color: #FFFFFF;
-                }
-
-                .status-kr {
-                    display: none;
-                }
-
-                .status-kr.pill {
-                    display: none;
-                }
-
-                .command-buttons {
-                    display: flex;
-                    gap: 10px;
-                    justify-content: space-between;
-                }
-
+                .command-buttons { display: flex; gap: 8px; justify-content: space-between; }
                 .cmd-btn {
-                    width: 110px;
-                    height: 38px;
-                    font-size: 14px;
-                    cursor: pointer;
-                    position: relative;
-                    font-family: 'Press Start 2P', cursive;
-                    background: #000000;
-                    color: transparent;
-                    letter-spacing: 1px;
-                    transition: none;
-                    box-sizing: border-box;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border: none;
-                    background-repeat: no-repeat;
-                    background-size: 100% auto;
-                    background-position: 0 0;
+                    width: 104px; height: 34px; font-size: 11px; letter-spacing: 1px;
+                    cursor: pointer; position: relative; font-family: 'Press Start 2P', cursive;
+                    background: #000; color: transparent;
+                    border: 0; outline: none; box-shadow: none;
+                    transition: background 0.1s ease, color 0.1s ease;
                 }
-                
-                /* 버튼별 이미지 매핑 */
-                .cmd-btn[data-index="0"] { 
-                    background-image: url('https://i.ibb.co/GnTODZ/image.png');
-                }
-                .cmd-btn[data-index="1"] { 
-                    background-image: url('https://i.ibb.co/q15wco/image.png');
-                }
-                .cmd-btn[data-index="2"] { 
-                    background-image: url('https://i.ibb.co/v5qNts/image.png');
-                }
-                .cmd-btn[data-index="3"] { 
-                    background-image: url('https://i.ibb.co/FwOLMJ/image.png');
-                }
+                .cmd-btn:hover { color: transparent; }
+                .cmd-btn.selected { box-shadow: none; }
+                .cmd-btn.selected::after { content: none; }
 
-                .cmd-btn:hover {
-                    background-position: 0 53%;
-                }
+                .hidden { display: none !important; }
 
-                /* Heart appears on hover */
-                .cmd-btn:hover::before {
-                    content: '';
-                    position: absolute;
-                    top: 10px;
-                    left: 4px;
-                    width: 20px;
-                    height: 20px;
-                    display: block;
-                    background-color: #000000;
-                    background-image: url('https://i.ibb.co/pF8sGP/image.png');
-                    background-repeat: no-repeat;
-                    background-position: center;
-                    background-size: contain;
+                .ut-stat-panel {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    gap: 6px 10px;
+                    background: rgba(255,255,255,0.05);
+                    border: 2px solid rgba(255,255,255,0.25);
+                    padding: 8px 10px;
+                    font-size: 11px;
+                    color: #fff;
+                    letter-spacing: 0.5px;
                 }
+                .ut-stat-row { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .ut-stat-row strong { color: var(--yellow); }
 
-                .cmd-btn.selected::after {
-                    content: '❤';
-                    position: absolute;
-                    left: -22px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    color: #FF0000;
-                    font-size: 16px;
-                }
-
-                /* 숨김 클래스 */
-                .hidden {
-                    display: none !important;
-                }
-
-                /* 아이템 팝업 */
                 #ut-item-popup {
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: #000000;
-                    border: 4px solid #FFFFFF;
-                    padding: 20px;
-                    z-index: ${Z_INDEX + 1};
-                    min-width: 320px;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
+                    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background: #000; border: 3px solid #fff; padding: 14px; z-index: ${Z_INDEX + 1};
+                    min-width: 300px; display: flex; flex-direction: column; gap: 10px;
                 }
-
-                .item-add {
-                    display: flex;
-                    gap: 8px;
-                }
-
+                .item-add { display: flex; gap: 8px; }
                 .item-add input {
-                    flex: 1;
-                    padding: 10px;
-                    border: 2px solid #FFFFFF;
-                    background: #000000;
-                    color: #FFFFFF;
-                    font-family: 'Press Start 2P', cursive;
-                    font-size: 12px;
+                    flex: 1; padding: 8px; border: 2px solid #fff; background: #000; color: #fff;
+                    font-family: 'Press Start 2P', cursive; font-size: 12px;
                 }
-
                 .item-add button {
-                    padding: 10px 14px;
-                    border: 2px solid #FFFFFF;
-                    background: #000000;
-                    color: #FFFFFF;
-                    cursor: pointer;
-                    font-family: 'Press Start 2P', cursive;
-                    font-size: 12px;
+                    padding: 8px 10px; border: 2px solid #fff; background: #000; color: #fff;
+                    cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 12px;
                 }
+                .item-add button:hover { background: #fff; color: #000; }
+                .item-list { list-style: none; padding: 0; margin: 0; max-height: 170px; overflow-y: auto; }
+                .item-list li { padding: 8px; cursor: pointer; transition: background 0.15s ease; }
+                .item-list li:hover { background: rgba(255,255,255,0.1); }
+                .item-list li.selected { color: var(--yellow); background: rgba(255,255,0,0.1); border: 1px solid var(--yellow); }
+                .item-list li.selected::before { content: '❤ '; color: var(--red); }
 
-                .item-add button:hover {
-                    background: #FFFFFF;
-                    color: #000000;
-                }
-
-                .item-list {
-                    list-style: none;
-                    padding: 0;
-                    margin: 0;
-                }
-
-                .item-list li {
+                #ut-settings {
+                    position: absolute;
+                    top: 42px; right: 10px;
+                    background: #000;
+                    border: 3px solid #fff;
                     padding: 10px;
+                    display: none;
+                    flex-direction: column;
+                    gap: 8px;
+                    width: 210px;
+                    z-index: ${Z_INDEX + 2};
+                }
+                #ut-settings label {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    font-size: 11px;
+                    color: #fff;
+                }
+                #ut-settings input {
+                    width: 90px;
+                    padding: 6px;
+                    background: #000;
+                    color: #fff;
+                    border: 2px solid #fff;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 11px;
+                }
+                #ut-settings button {
+                    padding: 6px 8px;
+                    background: #000;
+                    color: #fff;
+                    border: 2px solid #fff;
+                    font-family: 'Press Start 2P', cursive;
+                    font-size: 11px;
                     cursor: pointer;
-                    transition: background 0.15s ease;
                 }
-
-                .item-list li:hover {
-                    background: rgba(255, 255, 255, 0.1);
-                }
-
-                .item-list li.selected {
-                    color: #FFFF00;
-                    background: rgba(255, 255, 0, 0.1);
-                    border: 1px solid #FFFF00;
-                }
-
-                .item-list li.selected::before {
-                    content: '❤ ';
-                    color: #FF0000;
-                }
+                #ut-settings button:hover { background: #fff; color: #000; }
+                ${cssForImages()}
             </style>
 
-            <div id="ut-overlay-root">
-                <div class="popup">
+            <div id="${OVERLAY_ID}">
+                <div id="${WINDOW_ID}">
+                    <div class="ut-drag-handle">
+                        <span class="ut-drag-title">UNDERTALE COMBAT</span>
+                        <div class="ut-controls">
+                            <button class="ut-gear-btn" id="ut-gear-btn">⚙</button>
+                        </div>
+                    </div>
                     <div id="ut-frame">
                         <div class="dialogue-container" id="dialogueBox">
                             <div class="dialogue-text" id="ut-log-container">
-                                <div class="log-message">
-                                    <span class="asterisk">*</span>대화 내용이 여기에 표시됩니다...
-                                </div>
+                                <div class="log-message"><span class="asterisk">*</span>대화 내용이 여기에 표시됩니다...</div>
                             </div>
                             <div class="attack-screen hidden">
                                 <div class="target-bar">
@@ -539,14 +327,18 @@
                         <div id="ut-bottom-hud">
                             <div class="status-bar">
                                 <span class="name">CHARA</span>
-                                <span class="status-lv">LV ${state.lv}</span>
+                                <span class="status-lv" id="ut-lv-text">LV ${state.lv}</span>
                                 <div class="status-hp">
                                     <span class="hp-label">HP</span>
-                                    <div class="hp-bar-container">
-                                        <div class="hp-bar-fill" style="width: 100%;"></div>
-                                    </div>
-                                    <span class="hp-text">${state.hp} / ${state.maxHp}</span>
+                                    <div class="hp-bar-container"><div class="hp-bar-fill" id="ut-hp-fill" style="width: 100%;"></div></div>
+                                    <span class="hp-text" id="ut-hp-text">${state.hp} / ${state.maxHp}</span>
                                 </div>
+                            </div>
+                            <div class="ut-stat-panel" id="ut-stat-panel">
+                                <div class="ut-stat-row" id="ut-base-stats"></div>
+                                <div class="ut-stat-row" id="ut-total-atk"></div>
+                                <div class="ut-stat-row" id="ut-total-def"></div>
+                                <div class="ut-stat-row" id="ut-equip-info"></div>
                             </div>
                             <div class="command-buttons">
                                 <button class="cmd-btn selected" data-index="0"></button>
@@ -562,297 +354,352 @@
                                 <button id="ut-item-add-btn">추가</button>
                             </div>
                             <ul class="item-list"></ul>
+                            <div style="display:flex; gap:8px; justify-content:flex-end;">
+                                <button id="ut-item-cancel" style="padding:6px 10px; border:2px solid #fff; background:#000; color:#fff; font-family:'Press Start 2P', cursive; font-size:11px; cursor:pointer;">취소</button>
+                            </div>
+                        </div>
+
+                        <div id="ut-settings">
+                            <label>LV <input type="number" id="ut-set-lv" min="1" value="${state.lv}"></label>
+                            <label>Max HP <input type="number" id="ut-set-maxhp" min="1" value="${state.maxHp}"></label>
+                            <label>HP <input type="number" id="ut-set-hp" min="0" value="${state.hp}"></label>
+                            <label>ATK Base <input type="number" id="ut-set-atk-base" min="0" value="${state.stats.atkBase}"></label>
+                            <label>ATK Equip <input type="number" id="ut-set-atk-eq" min="0" value="${state.stats.atkEquip}"></label>
+                            <label>DEF Base <input type="number" id="ut-set-def-base" min="0" value="${state.stats.defBase}"></label>
+                            <label>DEF Equip <input type="number" id="ut-set-def-eq" min="0" value="${state.stats.defEquip}"></label>
+                            <label>Weapon <input type="text" id="ut-set-weapon" value="${state.stats.weapon}"></label>
+                            <label>Armor <input type="text" id="ut-set-armor" value="${state.stats.armor}"></label>
+                            <button id="ut-settings-apply">적용</button>
                         </div>
                     </div>
                 </div>
             </div>
         `;
-
         document.body.appendChild(overlay);
-        
-        // 토글 버튼을 별도로 생성 (overlay와 독립적)
+
         const toggleBtn = document.createElement('button');
         toggleBtn.className = 'ut-toggle-btn';
         toggleBtn.id = 'ut-toggle';
         toggleBtn.textContent = 'UI 숨기기';
         document.body.appendChild(toggleBtn);
-        
+
+        loadSettingsFromStorage();
+        centerWindow();
+        enableDrag();
         initializeEventListeners();
         startChatObserver();
+        updateStatusUI();
+        if (state.lastBgm) startBgm(state.lastBgm);
     }
 
-    // ==================== 이벤트 리스너 ====================
-    function initializeEventListeners() {
-        // 토글 버튼 이벤트
-        const toggleBtn = document.getElementById('ut-toggle');
-        const overlayRoot = document.getElementById('ut-overlay-root');
-        if (toggleBtn && overlayRoot) {
-            toggleBtn.addEventListener('click', () => {
-                const isHidden = overlayRoot.classList.toggle('hidden');
-                toggleBtn.textContent = isHidden ? 'UI 표시' : 'UI 숨기기';
-            });
-        }
+    function loadSettingsFromStorage() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) {
+                const saved = JSON.parse(raw);
+                if (typeof saved.lv === 'number') state.lv = Math.max(1, saved.lv);
+                if (typeof saved.maxHp === 'number') state.maxHp = Math.max(1, saved.maxHp);
+                if (typeof saved.hp === 'number') state.hp = Math.min(state.maxHp, Math.max(0, saved.hp));
+                if (saved.stats) {
+                    state.stats.atkBase = Math.max(0, saved.stats.atkBase ?? state.stats.atkBase);
+                    state.stats.defBase = Math.max(0, saved.stats.defBase ?? state.stats.defBase);
+                    state.stats.atkEquip = Math.max(0, saved.stats.atkEquip ?? state.stats.atkEquip);
+                    state.stats.defEquip = Math.max(0, saved.stats.defEquip ?? state.stats.defEquip);
+                    state.stats.weapon = saved.stats.weapon || state.stats.weapon;
+                    state.stats.armor = saved.stats.armor || state.stats.armor;
+                }
+            }
+            const bgm = localStorage.getItem(STORAGE_BGM_KEY);
+            if (bgm) state.lastBgm = bgm;
+        } catch (e) { console.warn('[UT Overlay] failed to load settings', e); }
+    }
 
-        // 키보드 이벤트
+    function saveSettingsToStorage() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                lv: state.lv,
+                maxHp: state.maxHp,
+                hp: state.hp,
+                stats: { ...state.stats }
+            }));
+            if (state.lastBgm) localStorage.setItem(STORAGE_BGM_KEY, state.lastBgm);
+        } catch (e) { console.warn('[UT Overlay] failed to save settings', e); }
+    }
+
+    function centerWindow() { const win=document.getElementById(WINDOW_ID); if(!win)return; requestAnimationFrame(()=>{const rect=win.getBoundingClientRect(); const left=Math.max(12,(window.innerWidth-rect.width)/2); const top=Math.max(12,(window.innerHeight-rect.height)/2); win.style.left=`${left}px`; win.style.top=`${top}px`;});}
+    function enableDrag(){const win=document.getElementById(WINDOW_ID); const handle=win?.querySelector('.ut-drag-handle'); if(!win||!handle)return; let dragging=false,startX=0,startY=0,origX=0,origY=0; const onMouseDown=(e)=>{dragging=true;startX=e.clientX;startY=e.clientY;const rect=win.getBoundingClientRect();origX=rect.left;origY=rect.top;document.addEventListener('mousemove',onMouseMove,true);document.addEventListener('mouseup',onMouseUp,true);}; const onMouseMove=(e)=>{if(!dragging)return;e.preventDefault();const dx=e.clientX-startX;const dy=e.clientY-startY;const newX=Math.max(4,Math.min(window.innerWidth-80,origX+dx));const newY=Math.max(4,Math.min(window.innerHeight-80,origY+dy));win.style.left=`${newX}px`;win.style.top=`${newY}px`;}; const onMouseUp=()=>{dragging=false;document.removeEventListener('mousemove',onMouseMove,true);document.removeEventListener('mouseup',onMouseUp,true);}; handle.addEventListener('mousedown',onMouseDown,true);}
+
+    function initializeEventListeners() {
+        const toggleBtn = document.getElementById('ut-toggle');
+        const overlayRoot = document.getElementById(OVERLAY_ID);
+        toggleBtn?.addEventListener('click', () => {
+            const isHidden = overlayRoot.classList.toggle('hidden');
+            toggleBtn.textContent = isHidden ? 'UI 표시' : 'UI 숨기기';
+        });
+
+        window.addEventListener('resize', () => centerWindow());
+
         document.addEventListener('keydown', handleKeydown, true);
 
-        // 마우스 스크롤 (로그 영역에서만)
         const logContainer = document.getElementById('ut-log-container');
-        if (logContainer) {
-            logContainer.addEventListener('wheel', (e) => {
-                e.stopPropagation();
-            }, true);
-        }
+        logContainer?.addEventListener('wheel', (e) => e.stopPropagation(), true);
 
-        // 입력창 포커스 유지
         const userInput = document.getElementById('ut-user-input');
-        if (userInput) {
-            userInput.addEventListener('input', (e) => {
-                state.userInput = e.target.value;
+        userInput?.addEventListener('input', (e) => {
+            state.userInput = e.target.value;
+            handleYouTubeFromText(state.userInput);
+        });
+
+        document.querySelectorAll('.cmd-btn').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                const idx = Number(e.currentTarget.dataset.index || 0);
+                state.selectedCommand = Math.min(COMMANDS.length - 1, Math.max(0, idx));
+                updateCommandButtons();
+                handleConfirm();
             });
+        });
+
+        const gearBtn = document.getElementById('ut-gear-btn');
+        const settings = document.getElementById('ut-settings');
+        gearBtn?.addEventListener('click', () => {
+            settings.style.display = settings.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        const applyBtn = document.getElementById('ut-settings-apply');
+        applyBtn?.addEventListener('click', () => applySettings());
+
+        document.addEventListener('mousedown', (e) => {
+            if (!settings) return;
+            if (settings.contains(e.target) || gearBtn.contains(e.target)) return;
+            settings.style.display = 'none';
+        }, true);
+
+        const itemCancel = document.getElementById('ut-item-cancel');
+        const itemPopup = document.getElementById('ut-item-popup');
+        itemCancel?.addEventListener('click', () => itemPopup?.classList.add('hidden'));
+    }
+
+    function handleYouTubeFromText(text) {
+        const videoId = extractYouTubeId(text || '');
+        if (videoId) {
+            state.lastBgm = videoId;
+            saveSettingsToStorage();
+            startBgm(videoId);
+            addLogMessage(`*BGM 재생: https://youtu.be/${videoId}*`);
         }
     }
 
-    // 키보드 핸들러
+    function formatMessage(text) {
+        let t = (text || '').trim();
+        if (!t.startsWith('*')) t = `*${t}`;
+        if (!t.endsWith('*')) t = `${t}*`;
+        return t;
+    }
+
+    function extractYouTubeId(str) {
+        const rx1 = /youtu\.be\/([A-Za-z0-9_-]{6,})/;
+        const rx2 = /youtube\.com\/.*[?&]v=([A-Za-z0-9_-]{6,})/;
+        const m1 = rx1.exec(str);
+        if (m1 && m1[1]) return m1[1];
+        const m2 = rx2.exec(str);
+        if (m2 && m2[1]) return m2[1];
+        return null;
+    }
+
+    function startBgm(videoId) {
+        if (!videoId) return;
+        let iframe = document.getElementById(BGM_IFRAME_ID);
+        const src = `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}`;
+        if (!iframe) {
+            iframe = document.createElement('iframe');
+            iframe.id = BGM_IFRAME_ID;
+            iframe.style.position = 'fixed';
+            iframe.style.width = '1px';
+            iframe.style.height = '1px';
+            iframe.style.opacity = '0';
+            iframe.style.pointerEvents = 'none';
+            iframe.allow = 'autoplay';
+            document.body.appendChild(iframe);
+        }
+        iframe.src = src;
+    }
+
+    function applySettings() {
+        const lvInput = document.getElementById('ut-set-lv');
+        const maxInput = document.getElementById('ut-set-maxhp');
+        const hpInput = document.getElementById('ut-set-hp');
+        const atkBaseInput = document.getElementById('ut-set-atk-base');
+        const atkEqInput = document.getElementById('ut-set-atk-eq');
+        const defBaseInput = document.getElementById('ut-set-def-base');
+        const defEqInput = document.getElementById('ut-set-def-eq');
+        const weaponInput = document.getElementById('ut-set-weapon');
+        const armorInput = document.getElementById('ut-set-armor');
+        const newLv = Math.max(1, parseInt(lvInput.value || state.lv, 10));
+        const newMax = Math.max(1, parseInt(maxInput.value || state.maxHp, 10));
+        let newHp = parseInt(hpInput.value || state.hp, 10);
+        newHp = isNaN(newHp) ? state.hp : newHp;
+        newHp = Math.min(newMax, Math.max(0, newHp));
+        const newAtkBase = Math.max(0, parseInt(atkBaseInput?.value || state.stats.atkBase, 10));
+        const newAtkEq = Math.max(0, parseInt(atkEqInput?.value || state.stats.atkEquip, 10));
+        const newDefBase = Math.max(0, parseInt(defBaseInput?.value || state.stats.defBase, 10));
+        const newDefEq = Math.max(0, parseInt(defEqInput?.value || state.stats.defEquip, 10));
+        state.lv = newLv;
+        state.maxHp = newMax;
+        state.hp = newHp;
+        state.stats.atkBase = newAtkBase;
+        state.stats.atkEquip = newAtkEq;
+        state.stats.defBase = newDefBase;
+        state.stats.defEquip = newDefEq;
+        state.stats.weapon = weaponInput?.value || state.stats.weapon;
+        state.stats.armor = armorInput?.value || state.stats.armor;
+        updateStatusUI();
+        saveSettingsToStorage();
+    }
+
     function handleKeydown(e) {
-        // 입력 모드에서 텍스트 입력 중이면 방향키만 차단
+        const overlayRoot = document.getElementById(OVERLAY_ID);
+        if (overlayRoot && overlayRoot.classList.contains('hidden')) return; // UI 숨김 시 키패스
         const userInput = document.getElementById('ut-user-input');
         const isTyping = userInput && document.activeElement === userInput;
 
-        // 방향키 처리
-        if (KEYS.LEFT.includes(e.key) || KEYS.RIGHT.includes(e.key)) {
-            if (!isTyping) {
-                e.preventDefault();
-                e.stopPropagation();
-                handleNavigation(e.key);
-            }
+        if (!isTyping && (KEYS.LEFT.includes(e.key) || KEYS.RIGHT.includes(e.key))) {
+            e.preventDefault(); e.stopPropagation(); handleNavigation(e.key);
         }
 
-        // 확인/취소 키 처리
         if (KEYS.CONFIRM.includes(e.key)) {
-            e.preventDefault();
-            e.stopPropagation();
-            handleConfirm();
+            e.preventDefault(); e.stopPropagation(); handleConfirm();
         }
 
         if (KEYS.CANCEL.includes(e.key)) {
-            e.preventDefault();
-            e.stopPropagation();
-            handleCancel();
+            e.preventDefault(); e.stopPropagation(); handleCancel();
         }
 
-        // 위/아래 키는 항상 차단 (기본 스크롤 방지)
-        if (KEYS.UP.includes(e.key) || KEYS.DOWN.includes(e.key)) {
-            if (!isTyping) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
+        if (!isTyping && (KEYS.UP.includes(e.key) || KEYS.DOWN.includes(e.key))) {
+            e.preventDefault(); e.stopPropagation();
         }
     }
 
-    // 네비게이션 처리
     function handleNavigation(key) {
-        if (KEYS.LEFT.includes(key)) {
-            state.selectedCommand = Math.max(0, state.selectedCommand - 1);
-        } else if (KEYS.RIGHT.includes(key)) {
-            state.selectedCommand = Math.min(COMMANDS.length - 1, state.selectedCommand + 1);
-        }
-
+        if (KEYS.LEFT.includes(key)) state.selectedCommand = Math.max(0, state.selectedCommand - 1);
+        else if (KEYS.RIGHT.includes(key)) state.selectedCommand = Math.min(COMMANDS.length - 1, state.selectedCommand + 1);
         updateCommandButtons();
     }
 
-    // 커맨드 버튼 업데이트
     function updateCommandButtons() {
-        const buttons = document.querySelectorAll('.cmd-btn');
-        buttons.forEach((btn, idx) => {
-            if (idx === state.selectedCommand) {
-                btn.classList.add('selected');
-            } else {
-                btn.classList.remove('selected');
-            }
+        document.querySelectorAll('.cmd-btn').forEach((btn, idx) => {
+            btn.classList.toggle('selected', idx === state.selectedCommand);
         });
     }
 
-    // 확인 키 처리
     function handleConfirm() {
         const command = COMMANDS[state.selectedCommand];
-        
         switch (command) {
-            case 'FIGHT':
-                handleFightCommand();
-                break;
-            case 'ACT':
-                handleActCommand();
-                break;
-            case 'ITEM':
-                handleItemCommand();
-                break;
-            case 'MERCY':
-                handleMercyCommand();
-                break;
+            case 'FIGHT': return handleFightCommand();
+            case 'ACT':   return handleActCommand();
+            case 'ITEM':  return handleItemCommand();
+            case 'MERCY': return handleMercyCommand();
         }
     }
 
-    // 취소 키 처리
     function handleCancel() {
-        // 게임 모드에서 입력 모드로 전환
-        if (state.currentMode === MODE.FIGHT) {
-            switchToInputMode();
-        }
-        
-        // 아이템 팝업 닫기
+        if (state.currentMode === MODE.FIGHT) switchToInputMode();
         const itemPopup = document.getElementById('ut-item-popup');
-        if (itemPopup && !itemPopup.classList.contains('hidden')) {
-            itemPopup.classList.add('hidden');
-        }
+        if (itemPopup && !itemPopup.classList.contains('hidden')) itemPopup.classList.add('hidden');
     }
 
-    // ==================== 커맨드 핸들러 ====================
-    
-    // FIGHT: 타이밍 미니게임
     function handleFightCommand() {
-        if (!state.userInput.trim()) {
-            addLogMessage('먼저 공격 행동을 입력하세요.');
-            return;
-        }
-
+        if (!state.userInput.trim()) { addLogMessage('먼저 공격 행동을 입력하세요.'); return; }
         switchToFightMode();
     }
 
     function switchToFightMode() {
         state.currentMode = MODE.FIGHT;
         const dialogueBox = document.getElementById('dialogueBox');
-        const attackScreen = dialogueBox.querySelector('.attack-screen');
-        
-        // 대화창에서 attack screen 표시 (이미지 기반)
-        dialogueBox.classList.add('show-attack');
-        if (attackScreen) {
-            attackScreen.classList.remove('hidden');
-        }
-        
+        const attackScreen = dialogueBox?.querySelector('.attack-screen');
+        dialogueBox?.classList.add('show-attack');
+        attackScreen?.classList.remove('hidden');
         startImageMinigame();
     }
 
     function switchToInputMode() {
         state.currentMode = MODE.INPUT;
         const dialogueBox = document.getElementById('dialogueBox');
-        const attackScreen = dialogueBox.querySelector('.attack-screen');
-        
-        // 대화창으로 복귀
-        dialogueBox.classList.remove('show-attack');
-        if (attackScreen) {
-            attackScreen.classList.add('hidden');
-        }
-        
+        const attackScreen = dialogueBox?.querySelector('.attack-screen');
+        dialogueBox?.classList.remove('show-attack');
+        attackScreen?.classList.add('hidden');
         state.gameActive = false;
     }
 
     function startImageMinigame() {
         state.gameActive = true;
-        state.barPosition = 0;
-        state.barDirection = 1;
-        
-        // CSS 애니메이션을 사용하므로 별도의 게임 루프가 필요 없음
-        // 커서는 이미 CSS animation으로 움직이고 있음
-        
-        // Enter 키로 정지하고 판정
+
         const stopHandler = (e) => {
-            if (KEYS.CONFIRM.includes(e.key) && state.gameActive) {
-                e.preventDefault();
-                e.stopPropagation();
+            if (!state.gameActive) return;
+            if (KEYS.CONFIRM.includes(e.key)) {
+                e.preventDefault(); e.stopPropagation();
                 state.gameActive = false;
                 document.removeEventListener('keydown', stopHandler, true);
-                
-                // 커서 위치를 CSS animation에서 계산
+
                 const cursor = document.querySelector('.attack-cursor');
-                if (cursor) {
+                const container = cursor?.parentElement;
+                if (cursor && container) {
                     const rect = cursor.getBoundingClientRect();
-                    const container = cursor.parentElement.getBoundingClientRect();
-                    const relativePos = (rect.left - container.left) / container.width;
-                    state.barPosition = Math.max(0, Math.min(1, relativePos));
+                    const crect = container.getBoundingClientRect();
+                    const relativePos = (rect.left - crect.left) / crect.width;
+                    const clamped = Math.max(0, Math.min(1, relativePos));
+                    const judgment = calculateJudgment(clamped);
+                    sendMessageToChat(`* ${state.userInput} ${judgment}*`);
                 }
-                
-                // 판정 계산
-                const judgment = calculateJudgment(state.barPosition);
-                const finalText = `* ${state.userInput} ${judgment}`;
-                
-                // 메시지 전송
-                sendMessageToChat(finalText);
-                
-                // UI 초기화
+
                 switchToInputMode();
                 state.userInput = '';
-                document.getElementById('ut-user-input').value = '';
+                const userInputEl = document.getElementById('ut-user-input');
+                if (userInputEl) userInputEl.value = '';
             }
         };
-        
         document.addEventListener('keydown', stopHandler, true);
     }
 
     function calculateJudgment(position) {
-        const distance = Math.abs(position - 0.5) * 2; // 중앙(0.5)으로부터의 거리를 0~1로 정규화
-        
-        for (const [key, value] of Object.entries(JUDGMENT)) {
-            if (distance <= value.max) {
-                return value.text;
-            }
-        }
-        
+        const distance = Math.abs(position - 0.5) * 2;
+        for (const value of Object.values(JUDGMENT)) if (distance <= value.max) return value.text;
         return JUDGMENT.MISS.text;
     }
 
-    // 아이템 렌더링
-    function renderItemList(selectedIndex = 0) {
-        const listEl = document.querySelector('#ut-item-popup .item-list');
-        if (!listEl) return;
-
-        listEl.innerHTML = '';
-        state.items.forEach((item, idx) => {
-            const li = document.createElement('li');
-            li.dataset.item = item.name;
-            li.textContent = item.desc ? `${item.name} - ${item.desc}` : item.name;
-            if (idx === selectedIndex) {
-                li.classList.add('selected');
-            }
-            listEl.appendChild(li);
-        });
-    }
-
-    // ACT: 직접 전송
     function handleActCommand() {
-        if (!state.userInput.trim()) {
-            addLogMessage('먼저 대사나 행동을 입력하세요.');
-            return;
-        }
-
-        const finalText = `${state.userInput}`;
-        sendMessageToChat(finalText);
-        
-        // 입력창 초기화
+        if (!state.userInput.trim()) { addLogMessage('먼저 대사나 행동을 입력하세요.'); return; }
+        sendMessageToChat(state.userInput);
         state.userInput = '';
-        document.getElementById('ut-user-input').value = '';
+        const userInputEl = document.getElementById('ut-user-input');
+        if (userInputEl) userInputEl.value = '';
     }
 
-    // ITEM: 아이템 사용
     function handleItemCommand() {
         const popup = document.getElementById('ut-item-popup');
         if (!popup) return;
-
         popup.classList.remove('hidden');
-        
+
         let selectedItem = 0;
         const itemListEl = popup.querySelector('.item-list');
         const addInput = document.getElementById('ut-item-input');
         const addBtn = document.getElementById('ut-item-add-btn');
+        const cancelBtn = document.getElementById('ut-item-cancel');
 
         function updateItemSelection() {
             const items = itemListEl.querySelectorAll('li');
-            items.forEach((item, idx) => {
-                if (idx === selectedItem) {
-                    item.classList.add('selected');
-                } else {
-                    item.classList.remove('selected');
-                }
+            items.forEach((item, idx) => item.classList.toggle('selected', idx === selectedItem));
+        }
+
+        function renderItemList(idx = 0) {
+            if (!itemListEl) return;
+            itemListEl.innerHTML = '';
+            state.items.forEach((item, i) => {
+                const li = document.createElement('li');
+                li.dataset.item = item.name;
+                li.textContent = item.desc ? `${item.name} - ${item.desc}` : item.name;
+                if (i === idx) li.classList.add('selected');
+                li.addEventListener('click', () => { selectedItem = i; updateItemSelection(); });
+                itemListEl.appendChild(li);
             });
         }
 
@@ -870,76 +717,65 @@
             updateItemSelection();
         }
 
-        const inputKeyHandler = (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addItemFromInput();
-            }
-        };
+        const inputKeyHandler = (e) => { if (e.key === 'Enter') { e.preventDefault(); addItemFromInput(); } };
 
-        const itemHandler = (e) => {
+        const itemKeyHandler = (e) => {
             const items = itemListEl.querySelectorAll('li');
             const lastIndex = Math.max(items.length - 1, 0);
+
             if (KEYS.UP.includes(e.key)) {
-                e.preventDefault();
-                e.stopPropagation();
-                selectedItem = Math.max(0, selectedItem - 1);
-                updateItemSelection();
+                e.preventDefault(); e.stopPropagation();
+                selectedItem = Math.max(0, selectedItem - 1); updateItemSelection();
             } else if (KEYS.DOWN.includes(e.key)) {
-                e.preventDefault();
-                e.stopPropagation();
-                selectedItem = Math.min(lastIndex, selectedItem + 1);
-                updateItemSelection();
+                e.preventDefault(); e.stopPropagation();
+                selectedItem = Math.min(lastIndex, selectedItem + 1); updateItemSelection();
             } else if (KEYS.CONFIRM.includes(e.key)) {
-                e.preventDefault();
-                e.stopPropagation();
-                
+                e.preventDefault(); e.stopPropagation();
                 if (!state.items.length) {
                     addLogMessage('아이템이 없습니다. 먼저 추가하세요.');
-                    cleanup();
-                    return;
+                    cleanup(); popup.classList.add('hidden'); return;
                 }
                 const item = state.items[selectedItem] || state.items[0];
                 const label = item.desc ? `${item.name} - ${item.desc}` : item.name;
-                const finalText = `* ${label}을(를) 사용했다. HP가 회복되었다.`;
-                sendMessageToChat(finalText);
-                
+                sendMessageToChat(`*${label}을(를) 사용했다. HP가 회복되었다.*`);
                 popup.classList.add('hidden');
                 cleanup();
             } else if (KEYS.CANCEL.includes(e.key)) {
-                e.preventDefault();
-                e.stopPropagation();
+                e.preventDefault(); e.stopPropagation();
                 popup.classList.add('hidden');
                 cleanup();
             }
         };
 
         function cleanup() {
-            document.removeEventListener('keydown', itemHandler, true);
+            document.removeEventListener('keydown', itemKeyHandler, true);
             addBtn?.removeEventListener('click', addItemFromInput);
             addInput?.removeEventListener('keydown', inputKeyHandler);
+            cancelBtn?.removeEventListener('click', cancelHandler);
         }
 
-        document.addEventListener('keydown', itemHandler, true);
+        const cancelHandler = () => {
+            popup.classList.add('hidden');
+            cleanup();
+        };
+
+        document.addEventListener('keydown', itemKeyHandler, true);
         addBtn?.addEventListener('click', addItemFromInput);
         addInput?.addEventListener('keydown', inputKeyHandler);
+        cancelBtn?.addEventListener('click', cancelHandler);
 
         renderItemList(selectedItem);
         updateItemSelection();
     }
 
-    // MERCY: 자비
     function handleMercyCommand() {
-        const finalText = '* 자비를 베풀었다.';
-        sendMessageToChat(finalText);
+        sendMessageToChat('* 자비를 베풀었다.*');
     }
 
-    // ==================== 메시지 전송 ====================
     function sendMessageToChat(finalText) {
-        addLogMessage(`[YOU] ${finalText}`);
-        
-        // 실제 사이트의 입력창 찾기 시도
-        // 일반적인 선택자들을 시도
+        const normalized = formatMessage(finalText);
+        addLogMessage(`[YOU] ${normalized}`);
+
         const selectors = [
             'textarea[placeholder*="메시지"]',
             'textarea[placeholder*="message"]',
@@ -947,133 +783,145 @@
             'textarea[class*="input"]',
             'div[contenteditable="true"]'
         ];
-        
+
         let nativeInput = null;
         let sendButton = null;
-        
+
         for (const selector of selectors) {
             const element = document.querySelector(selector);
-            if (element && element.id !== 'ut-user-input') {
-                nativeInput = element;
-                break;
+            if (element && element.id !== 'ut-user-input' && !element.closest(`#${OVERLAY_ID}`)) {
+                nativeInput = element; break;
             }
         }
-        
-        if (nativeInput && nativeInput.id !== 'ut-user-input') {
-            // React/Vue 가상 DOM 호환
+
+        if (nativeInput) {
             const isTextarea = nativeInput.tagName === 'TEXTAREA';
             const isContentEditable = nativeInput.contentEditable === 'true';
-            
+
             if (isTextarea) {
-                const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-                    window.HTMLTextAreaElement.prototype, 
-                    "value"
-                ).set;
-                nativeInputValueSetter.call(nativeInput, finalText);
+                const setter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set;
+                setter?.call(nativeInput, normalized);
                 nativeInput.dispatchEvent(new Event('input', { bubbles: true }));
             } else if (isContentEditable) {
-                nativeInput.textContent = finalText;
+                nativeInput.textContent = normalized;
                 nativeInput.dispatchEvent(new Event('input', { bubbles: true }));
             }
-            
-            // 전송 버튼 찾기
+
             const buttonSelectors = [
                 'button[aria-label*="전송"]',
                 'button[aria-label*="send"]',
                 'button.send-message',
                 'button[type="submit"]'
             ];
-            
             for (const selector of buttonSelectors) {
                 const element = document.querySelector(selector);
-                if (element && !element.closest('#ut-overlay-root')) {
-                    sendButton = element;
-                    break;
-                }
+                if (element && !element.closest(`#${OVERLAY_ID}`)) { sendButton = element; break; }
             }
-            
-            if (sendButton) {
-                setTimeout(() => sendButton.click(), 100);
-            }
+            if (sendButton) setTimeout(() => sendButton.click(), 100);
         } else {
-            // No native input found, log message only goes to overlay
             console.log('[Undertale Overlay] No native chat input found on page');
         }
     }
 
-    // ==================== 채팅 로그 관찰 ====================
     function startChatObserver() {
-        const observer = new MutationObserver((mutations) => {
+        if (observer) observer.disconnect();
+
+        observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
-                    // Only process element nodes that are not part of the overlay
-                    if (node.nodeType === Node.ELEMENT_NODE && 
-                        node.id !== OVERLAY_ID && 
-                        !node.closest && !node.querySelector('#' + OVERLAY_ID)) {
-                        // AI 응답으로 보이는 요소 감지
-                        if (node.matches && (
-                            node.matches('[class*="message"]') ||
-                            node.matches('[class*="chat"]') ||
-                            node.matches('[role="article"]')
-                        )) {
-                            const text = node.textContent || '';
-                            const images = node.querySelectorAll('img');
-                            
-                            // Check text content doesn't belong to overlay
-                            if (text.trim() && !node.closest('#' + OVERLAY_ID)) {
-                                addLogMessage(text, images);
-                            }
-                        }
+                    if (node.nodeType !== Node.ELEMENT_NODE) return;
+                    const el = /** @type {Element} */ (node);
+                    if (el.closest && el.closest(`#${OVERLAY_ID}`)) return;
+
+                    const looksLikeMessage =
+                        el.matches('[class*="message"]') ||
+                        el.matches('[class*="chat"]') ||
+                        el.matches('[role="article"]');
+
+                    if (!looksLikeMessage) return;
+
+                    const text = (el.textContent || '').trim();
+                    const images = el.querySelectorAll('img');
+                    if (text) {
+                        addLogMessage(text, images);
+                        handleYouTubeFromText(text);
                     }
                 });
             });
         });
-        
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
+        observer.observe(document.body, { childList: true, subtree: true });
     }
 
-    // 로그 메시지 추가
+    function updateStatusUI() {
+        const hpFill = document.getElementById('ut-hp-fill');
+        const hpText = document.getElementById('ut-hp-text');
+        const lvText = document.getElementById('ut-lv-text');
+        const max = Math.max(1, state.maxHp);
+        const hp = Math.min(max, Math.max(0, state.hp));
+        state.hp = hp;
+        const pct = Math.max(0, Math.min(100, (hp / max) * 100));
+        if (hpFill) hpFill.style.width = `${pct}%`;
+        if (hpText) hpText.textContent = `${hp} / ${max}`;
+        if (lvText) lvText.textContent = `LV ${state.lv}`;
+
+        const lvInput = document.getElementById('ut-set-lv');
+        const maxInput = document.getElementById('ut-set-maxhp');
+        const hpInput = document.getElementById('ut-set-hp');
+        const atkBaseInput = document.getElementById('ut-set-atk-base');
+        const atkEqInput = document.getElementById('ut-set-atk-eq');
+        const defBaseInput = document.getElementById('ut-set-def-base');
+        const defEqInput = document.getElementById('ut-set-def-eq');
+        const weaponInput = document.getElementById('ut-set-weapon');
+        const armorInput = document.getElementById('ut-set-armor');
+        if (lvInput) lvInput.value = state.lv;
+        if (maxInput) maxInput.value = state.maxHp;
+        if (hpInput) hpInput.value = state.hp;
+        if (atkBaseInput) atkBaseInput.value = state.stats.atkBase;
+        if (atkEqInput) atkEqInput.value = state.stats.atkEquip;
+        if (defBaseInput) defBaseInput.value = state.stats.defBase;
+        if (defEqInput) defEqInput.value = state.stats.defEquip;
+        if (weaponInput) weaponInput.value = state.stats.weapon;
+        if (armorInput) armorInput.value = state.stats.armor;
+
+        const baseRow = document.getElementById('ut-base-stats');
+        const totalAtkRow = document.getElementById('ut-total-atk');
+        const totalDefRow = document.getElementById('ut-total-def');
+        const equipRow = document.getElementById('ut-equip-info');
+        const formatOverflow = (base, eq) => {
+            const total = base + eq;
+            if (total > 99) return `99[+${total - 99}]`;
+            return String(total);
+        };
+        if (baseRow) baseRow.innerHTML = `기본 능력치: <strong>ATK ${state.stats.atkBase}</strong>, <strong>DEF ${state.stats.defBase}</strong>`;
+        if (totalAtkRow) totalAtkRow.innerHTML = `총 ATK: <strong>${formatOverflow(state.stats.atkBase, state.stats.atkEquip)}</strong> (기본 ${state.stats.atkBase} + 장비 ${state.stats.atkEquip})`;
+        if (totalDefRow) totalDefRow.innerHTML = `총 DEF: <strong>${formatOverflow(state.stats.defBase, state.stats.defEquip)}</strong> (기본 ${state.stats.defBase} + 장비 ${state.stats.defEquip})`;
+        if (equipRow) equipRow.innerHTML = `장착중: ${state.stats.weapon}(ATK+${state.stats.atkEquip}), ${state.stats.armor}(DEF+${state.stats.defEquip})`;
+    }
+
     function addLogMessage(text, images = null) {
         const logContainer = document.getElementById('ut-log-container');
         if (!logContainer) return;
-        
         const messageDiv = document.createElement('div');
         messageDiv.className = 'log-message';
-        if ((text || '').trim().startsWith('[YOU]')) {
-            messageDiv.classList.add('from-player');
-        }
+        if ((text || '').trim().startsWith('[YOU]')) messageDiv.classList.add('from-player');
         messageDiv.textContent = text;
-        
         if (images && images.length > 0) {
             images.forEach((img) => {
-                const clonedImg = img.cloneNode(true);
-                messageDiv.appendChild(clonedImg);
+                const cloned = img.cloneNode(true);
+                messageDiv.appendChild(cloned);
             });
         }
-        
         logContainer.appendChild(messageDiv);
-        
-        // 자동 스크롤
         logContainer.scrollTop = logContainer.scrollHeight;
-        
-        // 히스토리 저장
         state.chatHistory.push({ text, images });
     }
 
-    // ==================== 초기화 ====================
     function init() {
         console.log('[Undertale Combat Overlay] 초기화 중...');
         createOverlay();
         console.log('[Undertale Combat Overlay] 준비 완료!');
     }
 
-    // 페이지 로드 후 실행
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
-    }
-})();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+    else init();
+})(); 
