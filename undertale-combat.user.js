@@ -62,7 +62,9 @@
             atkEquip: 99,
             defEquip: 99,
             weapon: '진짜 칼',
-            armor: '로켓'
+            armor: '로켓',
+            weaponInv: '나뭇가지(0), 장난감 칼(3), 질긴 장갑(5), 튼튼한 반다나(7), 찢어진 공책(2), 빈 권총(12), 녹슨 칼(15), 단도(15)',
+            armorInv: '낡은 붕대(0), 빛바랜 리본(3), 심술궂은 반다나(7), 낡은 가슴장식(10), 흐린 안경(6), 에이프런(11), 카우보이 모자(12), 메달(15), 테미 갑옷(20)'
         },
         chatHistory: [],
         gameActive: false,
@@ -236,6 +238,7 @@
                 }
                 .ut-stat-row { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                 .ut-stat-row strong { color: var(--yellow); }
+                #ut-weapon-inv, #ut-armor-inv { grid-column: span 2; font-size: 10px; }
 
                 #ut-item-popup {
                     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -339,6 +342,8 @@
                                 <div class="ut-stat-row" id="ut-total-atk"></div>
                                 <div class="ut-stat-row" id="ut-total-def"></div>
                                 <div class="ut-stat-row" id="ut-equip-info"></div>
+                                <div class="ut-stat-row" id="ut-weapon-inv"></div>
+                                <div class="ut-stat-row" id="ut-armor-inv"></div>
                             </div>
                             <div class="command-buttons">
                                 <button class="cmd-btn selected" data-index="0"></button>
@@ -369,6 +374,8 @@
                             <label>DEF Equip <input type="number" id="ut-set-def-eq" min="0" value="${state.stats.defEquip}"></label>
                             <label>Weapon <input type="text" id="ut-set-weapon" value="${state.stats.weapon}"></label>
                             <label>Armor <input type="text" id="ut-set-armor" value="${state.stats.armor}"></label>
+                            <label>무기 보유 <input type="text" id="ut-set-weapon-inv" value="${state.stats.weaponInv}"></label>
+                            <label>악세 보유 <input type="text" id="ut-set-armor-inv" value="${state.stats.armorInv}"></label>
                             <button id="ut-settings-apply">적용</button>
                         </div>
                     </div>
@@ -407,6 +414,8 @@
                     state.stats.defEquip = Math.max(0, saved.stats.defEquip ?? state.stats.defEquip);
                     state.stats.weapon = saved.stats.weapon || state.stats.weapon;
                     state.stats.armor = saved.stats.armor || state.stats.armor;
+                    state.stats.weaponInv = saved.stats.weaponInv || state.stats.weaponInv;
+                    state.stats.armorInv = saved.stats.armorInv || state.stats.armorInv;
                 }
             }
             const bgm = localStorage.getItem(STORAGE_BGM_KEY);
@@ -487,6 +496,7 @@
             startBgm(videoId);
             addLogMessage(`*BGM 재생: https://youtu.be/${videoId}*`);
         }
+        parseStatsFromNote(text);
     }
 
     function formatMessage(text) {
@@ -494,6 +504,89 @@
         if (!t.startsWith('*')) t = `*${t}`;
         if (!t.endsWith('*')) t = `${t}*`;
         return t;
+    }
+
+    function parseStatsFromNote(rawText) {
+        if (!rawText) return;
+        const lines = [];
+        const commentMatches = rawText.match(/\[\/\/\]:\s?#\s?\([^\)]+\)/g);
+        if (commentMatches) {
+            commentMatches.forEach((m) => {
+                const inner = m.replace(/^\[\/\/\]:\s?#\s?\(/, '').replace(/\)$/, '');
+                lines.push(inner);
+            });
+        } else {
+            lines.push(rawText);
+        }
+
+        let updated = false;
+
+        lines.forEach((line) => {
+            // 레벨/HP
+            const lvHp = line.match(/레벨:\s*(\d+)[^|]*\|\s*HP:\s*(\d+)\s*\/\s*(\d+)/);
+            if (lvHp) {
+                state.lv = Math.max(1, parseInt(lvHp[1], 10));
+                state.hp = Math.max(0, parseInt(lvHp[2], 10));
+                state.maxHp = Math.max(state.hp, parseInt(lvHp[3], 10));
+                updated = true;
+                return;
+            }
+
+            // 기본 능력치
+            const base = line.match(/기본 능력치:\s*ATK\s*(\d+),\s*DEF\s*(\d+)/);
+            if (base) {
+                state.stats.atkBase = Math.max(0, parseInt(base[1], 10));
+                state.stats.defBase = Math.max(0, parseInt(base[2], 10));
+                updated = true;
+                return;
+            }
+
+            // 총 능력치 (장비 포함)
+            const total = line.match(/총 ATK:\s*([0-9]+)(?:\[\+([0-9]+)\])?.*총 DEF:\s*([0-9]+)(?:\[\+([0-9]+)\])?/);
+            if (total) {
+                // 총 = base + equip (단, UI 표시에서는 99 cap)
+                const atkOverflow = parseInt(total[2] || '0', 10);
+                const defOverflow = parseInt(total[4] || '0', 10);
+                // 총 수치가 99[+X] 형태라면 base + equip = 99 + X
+                const atkTotalRaw = parseInt(total[1], 10) + atkOverflow;
+                const defTotalRaw = parseInt(total[3], 10) + defOverflow;
+                // 장비 수치는 (총 - base) 로 역산 (음수 방지)
+                state.stats.atkEquip = Math.max(0, atkTotalRaw - state.stats.atkBase);
+                state.stats.defEquip = Math.max(0, defTotalRaw - state.stats.defBase);
+                updated = true;
+                return;
+            }
+
+            // 장착중 무기/방어구
+            const equip = line.match(/장착중:\s*([^,(]+)\(ATK\+(\d+)\),\s*([^,(]+)\(DEF\+(\d+)\)/);
+            if (equip) {
+                state.stats.weapon = equip[1].trim();
+                state.stats.atkEquip = Math.max(0, parseInt(equip[2], 10));
+                state.stats.armor = equip[3].trim();
+                state.stats.defEquip = Math.max(0, parseInt(equip[4], 10));
+                updated = true;
+                return;
+            }
+
+            const weaponInv = line.match(/무기 보유:\s*(.+)/);
+            if (weaponInv) {
+                state.stats.weaponInv = weaponInv[1].trim();
+                updated = true;
+                return;
+            }
+
+            const armorInv = line.match(/악세사리 보유:\s*(.+)/);
+            if (armorInv) {
+                state.stats.armorInv = armorInv[1].trim();
+                updated = true;
+                return;
+            }
+        });
+
+        if (updated) {
+            updateStatusUI();
+            saveSettingsToStorage();
+        }
     }
 
     function extractYouTubeId(str) {
@@ -534,6 +627,8 @@
         const defEqInput = document.getElementById('ut-set-def-eq');
         const weaponInput = document.getElementById('ut-set-weapon');
         const armorInput = document.getElementById('ut-set-armor');
+        const weaponInvInput = document.getElementById('ut-set-weapon-inv');
+        const armorInvInput = document.getElementById('ut-set-armor-inv');
         const newLv = Math.max(1, parseInt(lvInput.value || state.lv, 10));
         const newMax = Math.max(1, parseInt(maxInput.value || state.maxHp, 10));
         let newHp = parseInt(hpInput.value || state.hp, 10);
@@ -552,6 +647,8 @@
         state.stats.defEquip = newDefEq;
         state.stats.weapon = weaponInput?.value || state.stats.weapon;
         state.stats.armor = armorInput?.value || state.stats.armor;
+        state.stats.weaponInv = weaponInvInput?.value || state.stats.weaponInv;
+        state.stats.armorInv = armorInvInput?.value || state.stats.armorInv;
         updateStatusUI();
         saveSettingsToStorage();
     }
@@ -845,6 +942,7 @@
                     if (text) {
                         addLogMessage(text, images);
                         handleYouTubeFromText(text);
+                        parseStatsFromNote(text);
                     }
                 });
             });
@@ -873,6 +971,8 @@
         const defEqInput = document.getElementById('ut-set-def-eq');
         const weaponInput = document.getElementById('ut-set-weapon');
         const armorInput = document.getElementById('ut-set-armor');
+        const weaponInvInput = document.getElementById('ut-set-weapon-inv');
+        const armorInvInput = document.getElementById('ut-set-armor-inv');
         if (lvInput) lvInput.value = state.lv;
         if (maxInput) maxInput.value = state.maxHp;
         if (hpInput) hpInput.value = state.hp;
@@ -882,11 +982,15 @@
         if (defEqInput) defEqInput.value = state.stats.defEquip;
         if (weaponInput) weaponInput.value = state.stats.weapon;
         if (armorInput) armorInput.value = state.stats.armor;
+        if (weaponInvInput) weaponInvInput.value = state.stats.weaponInv;
+        if (armorInvInput) armorInvInput.value = state.stats.armorInv;
 
         const baseRow = document.getElementById('ut-base-stats');
         const totalAtkRow = document.getElementById('ut-total-atk');
         const totalDefRow = document.getElementById('ut-total-def');
         const equipRow = document.getElementById('ut-equip-info');
+        const weaponInvRow = document.getElementById('ut-weapon-inv');
+        const armorInvRow = document.getElementById('ut-armor-inv');
         const formatOverflow = (base, eq) => {
             const total = base + eq;
             if (total > 99) return `99[+${total - 99}]`;
@@ -896,6 +1000,8 @@
         if (totalAtkRow) totalAtkRow.innerHTML = `총 ATK: <strong>${formatOverflow(state.stats.atkBase, state.stats.atkEquip)}</strong> (기본 ${state.stats.atkBase} + 장비 ${state.stats.atkEquip})`;
         if (totalDefRow) totalDefRow.innerHTML = `총 DEF: <strong>${formatOverflow(state.stats.defBase, state.stats.defEquip)}</strong> (기본 ${state.stats.defBase} + 장비 ${state.stats.defEquip})`;
         if (equipRow) equipRow.innerHTML = `장착중: ${state.stats.weapon}(ATK+${state.stats.atkEquip}), ${state.stats.armor}(DEF+${state.stats.defEquip})`;
+        if (weaponInvRow) weaponInvRow.textContent = `무기 보유: ${state.stats.weaponInv}`;
+        if (armorInvRow) armorInvRow.textContent = `악세사리 보유: ${state.stats.armorInv}`;
     }
 
     function addLogMessage(text, images = null) {
@@ -914,6 +1020,7 @@
         logContainer.appendChild(messageDiv);
         logContainer.scrollTop = logContainer.scrollHeight;
         state.chatHistory.push({ text, images });
+        parseStatsFromNote(text);
     }
 
     function init() {
